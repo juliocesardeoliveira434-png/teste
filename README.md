@@ -18,12 +18,13 @@ python3 -m http.server 8080
 
 **Jeito 3 — GitHub Pages (hospedagem de graça, pra sempre):**
 
-1. Faça push deste repositório para o seu GitHub;
-2. No repositório: **Settings → Pages → Build and deployment**;
-3. Em *Source*, escolha o branch (ex.: `main` ou o branch da sessão) e a pasta `/ (root)`;
-4. Em ~1 minuto o site fica no ar em `https://SEUUSUARIO.github.io/NOME-DO-REPO/`.
+1. Se o repositório for **privado**, deixe-o público: **Settings → General → Danger Zone → Change visibility** (no plano gratuito o Pages só publica repositórios públicos);
+2. Faça merge do PR e/ou garanta o push deste branch no GitHub;
+3. No repositório: **Settings → Pages → Build and deployment**;
+4. Em *Source*, escolha o branch (ex.: `main` após o merge) e a pasta `/ (root)`;
+5. Em ~1 minuto o site fica no ar em `https://SEUUSUARIO.github.io/NOME-DO-REPO/`.
 
-Nenhuma etapa precisa de chave de API, token de serviço externo ou conta em nada. O GitHub Pages é gratuito para repositórios públicos.
+> Não é possível publicar do privado com conta gratuita: o próprio GitHub bloqueia. Nenhuma etapa precisa de chave de API ou serviço externo — o GitHub Pages é gratuito para repositórios públicos.
 
 ## 🎮 Controles
 
