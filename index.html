@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Teclaton — seu teclado é um instrumento</title>
+<meta name="description" content="288 sons, 8 universos sonoros, 1 teclado. Aperte teclas e faça música com animações — inspirado no Patatap.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<header id="top">
+  <div id="brand">
+    <div id="logo">TECLA<span>TON</span></div>
+    <div id="packname">🎹 Clássico</div>
+  </div>
+  <div id="controls">
+    <button id="btnDemo" class="ctl" title="Tocar demonstração">▶ Demo</button>
+    <button id="btnRec" class="ctl" title="Gravar vídeo da sessão (com som)">⏺ Gravar</button>
+    <div id="volwrap" title="Volume">
+      <span>🔊</span>
+      <input type="range" id="vol" min="0" max="100" value="80">
+    </div>
+    <button id="btnFull" class="ctl" title="Tela cheia">⛶</button>
+    <button id="btnHelp" class="ctl" title="Ajuda">?</button>
+  </div>
+</header>
+
+<div id="hint">aperte <b>qualquer tecla</b><span class="dim"> · espaço troca o universo sonoro</span></div>
+
+<footer id="kb" aria-hidden="true">
+  <div class="kbrow" id="kbDigits"></div>
+  <div class="kbrow" id="kb1"></div>
+  <div class="kbrow" id="kb2"></div>
+  <div class="kbrow" id="kb3"></div>
+</footer>
+
+<div id="toast"></div>
+
+<div id="start">
+  <div class="startBox">
+    <div class="startLogo">TECLA<b>TON</b></div>
+    <p class="startTag">288 sons · 8 universos · 1 teclado</p>
+    <button id="btnStart">▶&nbsp; começar</button>
+    <p class="startSmall">ou simplesmente aperte uma tecla</p>
+    <p class="startTiny">inspirado no clássico <i>Patatap</i> — 100% offline, sem APIs</p>
+  </div>
+</div>
+
+<div id="help" class="hidden">
+  <div id="helpCard">
+    <button id="btnHelpClose" title="Fechar">✕</button>
+    <h2>Como tocar</h2>
+    <table>
+      <tr><td><kbd>A</kbd>–<kbd>Z</kbd></td><td>cada letra é um som + animação</td></tr>
+      <tr><td><kbd>1</kbd>–<kbd>0</kbd></td><td>golpes especiais (acordes, glissandos, trovões…)</td></tr>
+      <tr><td><kbd>Espaço</kbd></td><td>troca o universo sonoro</td></tr>
+      <tr><td>toque na tela</td><td>(celular) toca as notas da esquerda pra direita</td></tr>
+      <tr><td>2 dedos</td><td>(celular) dispara um golpe especial</td></tr>
+    </table>
+    <h2>Recursos</h2>
+    <table>
+      <tr><td>⏺ Gravar</td><td>grava vídeo + áudio da sessão (.webm), direto no navegador</td></tr>
+      <tr><td>▶ Demo</td><td>toque uma sequência de demonstração do universo atual</td></tr>
+      <tr><td>⛶</td><td>tela cheia — perfeito para apresentar</td></tr>
+    </table>
+    <p class="helpFoot">Feito com Web Audio API — todos os sons são sintetizados em tempo real.<br>
+    Nenhum arquivo de áudio, nenhuma API externa, nenhuma chave. Homenagem a <i>Patatap</i> (Jono Brandel &amp; Lullatone).</p>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/packs.js"></script>
+<script src="js/visuals.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
