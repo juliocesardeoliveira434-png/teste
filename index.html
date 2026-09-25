@@ -1,78 +1,114 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Teclaton — seu teclado é um instrumento</title>
-<meta name="description" content="288 sons, 8 universos sonoros, 1 teclado. Aperte teclas e faça música com animações — inspirado no Patatap.">
-<link rel="stylesheet" href="css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vitrine — Plataforma de Loja Online</title>
+<meta name="description" content="Vitrine: plataforma de e-commerce completa. Catálogo, carrinho, checkout com Pix, cartão e boleto, painel administrativo e planos. Responsiva para PC, tablet e celular.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M8 11l8 12 8-12' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/store.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-<canvas id="stage"></canvas>
 
-<header id="top">
-  <div id="brand">
-    <div id="logo">TECLA<span>TON</span></div>
-    <div id="packname">🎹 Clássico</div>
+<a class="skiplink" href="#view">Pular para o conteúdo</a>
+
+<!-- ===== splash de carregamento ===== -->
+<div id="boot">
+  <div class="boot-inner">
+    <div class="boot-logo">VITRINE<b>PRO</b></div>
+    <div class="boot-bar"><i></i></div>
+    <div class="boot-txt">preparando sua loja…</div>
   </div>
-  <div id="controls">
-    <button id="btnDemo" class="ctl" title="Tocar demonstração">▶ Demo</button>
-    <button id="btnRec" class="ctl" title="Gravar vídeo da sessão (com som)">⏺ Gravar</button>
-    <div id="volwrap" title="Volume">
-      <span>🔊</span>
-      <input type="range" id="vol" min="0" max="100" value="80">
+</div>
+
+<!-- ===== barra superior (loja) ===== -->
+<header class="topbar" id="topbar">
+  <div class="topbar-in">
+    <button class="iconbtn only-mobile" id="btnMenu" aria-label="Abrir menu">
+      <span class="burger"></span>
+    </button>
+
+    <a class="brand" href="#/" data-link>
+      <span class="brand-mark" id="brandMark">V</span>
+      <span class="brand-txt">VITRINE<b>PRO</b></span>
+    </a>
+
+    <form class="searchbar" id="searchForm" role="search">
+      <span class="search-ico" data-icon="search"></span>
+      <input type="search" id="searchInput" placeholder="Buscar produtos, marcas, categorias…" autocomplete="off" aria-label="Buscar">
+      <button type="button" class="search-clear" id="searchClear" aria-label="Limpar">✕</button>
+      <kbd class="only-desktop">/</kbd>
+    </form>
+
+    <div class="top-actions">
+      <button class="iconbtn only-desktop" id="btnTheme" title="Alternar tema" aria-label="Alternar tema"></button>
+      <a class="iconbtn" href="#/conta/favoritos" data-link title="Favoritos" aria-label="Favoritos">
+        <span data-icon="heart"></span><i class="dot" id="wishCount" hidden>0</i>
+      </a>
+      <a class="iconbtn" href="#/conta" data-link title="Minha conta" aria-label="Minha conta">
+        <span data-icon="user"></span>
+      </a>
+      <button class="cartbtn" id="btnCart" aria-label="Abrir carrinho">
+        <span data-icon="cart"></span>
+        <i class="dot" id="cartCount" hidden>0</i>
+      </button>
+      <a class="btn btn-ghost btn-sm only-desktop" href="#/admin" data-link>Painel</a>
     </div>
-    <button id="btnFull" class="ctl" title="Tela cheia">⛶</button>
-    <button id="btnHelp" class="ctl" title="Ajuda">?</button>
   </div>
+
+  <!-- navegação de categorias (desktop) -->
+  <nav class="catbar only-desktop" id="catbar" aria-label="Categorias"></nav>
 </header>
 
-<div id="hint">aperte <b>qualquer tecla</b><span class="dim"> · espaço troca o universo sonoro</span></div>
+<!-- ===== conteúdo ===== -->
+<main id="view" tabindex="-1"></main>
 
-<footer id="kb" aria-hidden="true">
-  <div class="kbrow" id="kbDigits"></div>
-  <div class="kbrow" id="kb1"></div>
-  <div class="kbrow" id="kb2"></div>
-  <div class="kbrow" id="kb3"></div>
-</footer>
+<!-- ===== rodapé da loja ===== -->
+<footer class="sitefoot" id="sitefoot"></footer>
 
-<div id="toast"></div>
+<!-- ===== navegação inferior (mobile) ===== -->
+<nav class="tabbar only-mobile" id="tabbar" aria-label="Navegação principal"></nav>
 
-<div id="start">
-  <div class="startBox">
-    <div class="startLogo">TECLA<b>TON</b></div>
-    <p class="startTag">288 sons · 8 universos · 1 teclado</p>
-    <button id="btnStart">▶&nbsp; começar</button>
-    <p class="startSmall">ou simplesmente aperte uma tecla</p>
-    <p class="startTiny">inspirado no clássico <i>Patatap</i> — 100% offline, sem APIs</p>
-  </div>
-</div>
+<!-- ===== overlays ===== -->
+<div id="cartRoot"></div>
+<div id="modalRoot"></div>
+<div id="toastRoot" class="toast-root" aria-live="polite"></div>
+<div id="paletteRoot"></div>
 
-<div id="help" class="hidden">
-  <div id="helpCard">
-    <button id="btnHelpClose" title="Fechar">✕</button>
-    <h2>Como tocar</h2>
-    <table>
-      <tr><td><kbd>A</kbd>–<kbd>Z</kbd></td><td>cada letra é um som + animação</td></tr>
-      <tr><td><kbd>1</kbd>–<kbd>0</kbd></td><td>golpes especiais (acordes, glissandos, trovões…)</td></tr>
-      <tr><td><kbd>Espaço</kbd></td><td>troca o universo sonoro</td></tr>
-      <tr><td>toque na tela</td><td>(celular) toca as notas da esquerda pra direita</td></tr>
-      <tr><td>2 dedos</td><td>(celular) dispara um golpe especial</td></tr>
-    </table>
-    <h2>Recursos</h2>
-    <table>
-      <tr><td>⏺ Gravar</td><td>grava vídeo + áudio da sessão (.webm), direto no navegador</td></tr>
-      <tr><td>▶ Demo</td><td>toque uma sequência de demonstração do universo atual</td></tr>
-      <tr><td>⛶</td><td>tela cheia — perfeito para apresentar</td></tr>
-    </table>
-    <p class="helpFoot">Feito com Web Audio API — todos os sons são sintetizados em tempo real.<br>
-    Nenhum arquivo de áudio, nenhuma API externa, nenhuma chave. Homenagem a <i>Patatap</i> (Jono Brandel &amp; Lullatone).</p>
-  </div>
-</div>
-
-<script src="js/audio.js"></script>
-<script src="js/packs.js"></script>
-<script src="js/visuals.js"></script>
+<script src="js/lib/dom.js"></script>
+<script src="js/lib/format.js"></script>
+<script src="js/lib/rng.js"></script>
+<script src="js/ui/icons.js"></script>
+<script src="js/ui/art.js"></script>
+<script src="js/data/catalog.js"></script>
+<script src="js/data/seed.js"></script>
+<script src="js/state/store.js"></script>
+<script src="js/state/cart.js"></script>
+<script src="js/services/shipping.js"></script>
+<script src="js/services/payments.js"></script>
+<script src="js/services/cep.js"></script>
+<script src="js/ui/toast.js"></script>
+<script src="js/ui/modal.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/ui/components.js"></script>
+<script src="js/pages/home.js"></script>
+<script src="js/pages/catalog.js"></script>
+<script src="js/pages/product.js"></script>
+<script src="js/pages/cart.js"></script>
+<script src="js/pages/checkout.js"></script>
+<script src="js/pages/account.js"></script>
+<script src="js/pages/plans.js"></script>
+<script src="js/pages/institutional.js"></script>
+<script src="js/pages/admin.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

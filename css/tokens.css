@@ -1,0 +1,146 @@
+/* ============================================================
+   VITRINE PRO — Design Tokens
+   Sistema de design: cores, tipografia, espaçamento, sombras.
+   Tudo é variável CSS → a marca é reconfigurável ao vivo
+   (ver Painel → Configurações → Marca).
+   ============================================================ */
+
+:root {
+  /* ---------- marca (mutável em runtime) ---------- */
+  --brand-h: 245;
+  --brand-s: 83%;
+  --brand-l: 53%;
+  --brand:        hsl(var(--brand-h) var(--brand-s) var(--brand-l));
+  --brand-700:    hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 14%));
+  --brand-600:    hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 8%));
+  --brand-500:    var(--brand);
+  --brand-400:    hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) + 8%));
+  --brand-100:    hsl(var(--brand-h) 90% 96%);
+  --brand-50:     hsl(var(--brand-h) 92% 98%);
+  --brand-soft:   hsl(var(--brand-h) 90% 96%);
+  --brand-ring:   hsl(var(--brand-h) var(--brand-s) var(--brand-l) / .35);
+
+  --accent: #f59e0b;
+  --accent-600: #d97706;
+  --accent-soft: #fff7ed;
+
+  /* ---------- semânticos ---------- */
+  --ok: #10b981;   --ok-soft: #ecfdf5;   --ok-ink: #047857;
+  --warn: #f59e0b; --warn-soft: #fffbeb; --warn-ink: #b45309;
+  --danger: #ef4444; --danger-soft:#fef2f2; --danger-ink:#b91c1c;
+  --info: #0ea5e9; --info-soft: #f0f9ff; --info-ink: #0369a1;
+  --purple: #8b5cf6; --pink:#ec4899; --teal:#14b8a6;
+
+  /* ---------- superfícies (tema claro) ---------- */
+  --bg: #f5f6fb;
+  --bg-alt: #eef0f7;
+  --surface: #ffffff;
+  --surface-2: #fafbfe;
+  --surface-3: #f2f4f9;
+  --line: #e6e9f2;
+  --line-2: #d8dcea;
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --ink-3: #64748b;
+  --ink-4: #94a3b8;
+  --invert: #ffffff;
+
+  --glass: rgba(255,255,255,.72);
+  --glass-line: rgba(15,23,42,.08);
+  --shadow-color: 15 23 42;
+
+  /* ---------- tipografia ---------- */
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-2xs: .6875rem;
+  --fs-xs:  .75rem;
+  --fs-sm:  .8125rem;
+  --fs-md:  .875rem;
+  --fs-base:.9375rem;
+  --fs-lg:  1.0625rem;
+  --fs-xl:  1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
+  --fs-4xl: 2.25rem;
+  --fs-5xl: 3rem;
+  --fs-6xl: 3.75rem;
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-base: 1.6;
+
+  --w-thin:400; --w-normal:500; --w-med:600; --w-semi:650; --w-bold:700; --w-black:800;
+
+  /* ---------- espaçamento ---------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-7: 32px; --sp-8: 40px;
+  --sp-9: 48px; --sp-10: 64px; --sp-11: 80px; --sp-12: 96px;
+
+  /* ---------- raios ---------- */
+  --r-xs: 6px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+  --r-xl: 20px; --r-2xl: 26px; --r-full: 999px;
+
+  /* ---------- sombras ---------- */
+  --sh-xs: 0 1px 2px rgb(var(--shadow-color) / .05);
+  --sh-sm: 0 1px 3px rgb(var(--shadow-color) / .08), 0 1px 2px rgb(var(--shadow-color) / .04);
+  --sh-md: 0 4px 12px rgb(var(--shadow-color) / .07), 0 1px 3px rgb(var(--shadow-color) / .05);
+  --sh-lg: 0 10px 30px rgb(var(--shadow-color) / .09), 0 2px 8px rgb(var(--shadow-color) / .05);
+  --sh-xl: 0 20px 50px rgb(var(--shadow-color) / .14), 0 4px 14px rgb(var(--shadow-color) / .06);
+  --sh-2xl: 0 34px 80px rgb(var(--shadow-color) / .20);
+  --sh-brand: 0 8px 24px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / .28);
+
+  /* ---------- movimento ---------- */
+  --ease: cubic-bezier(.4,0,.2,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --t-fast: 120ms; --t: 200ms; --t-slow: 380ms; --t-xslow: 620ms;
+
+  /* ---------- layout ---------- */
+  --header-h: 68px;
+  --catbar-h: 46px;
+  --shell: 1320px;
+  --shell-wide: 1560px;
+  --z-header: 200;
+  --z-drawer: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+}
+
+/* ============================ TEMA ESCURO ============================ */
+[data-theme="dark"] {
+  --bg: #080b14;
+  --bg-alt: #0c1120;
+  --surface: #111726;
+  --surface-2: #151d2f;
+  --surface-3: #1a2337;
+  --line: #232d43;
+  --line-2: #2e3a54;
+  --ink: #eef2ff;
+  --ink-2: #c3cbdc;
+  --ink-3: #94a3b8;
+  --ink-4: #6b7a93;
+  --invert: #0f172a;
+
+  --glass: rgba(17,23,38,.78);
+  --glass-line: rgba(255,255,255,.09);
+  --shadow-color: 0 0 0;
+
+  --brand-100: hsl(var(--brand-h) 60% 18%);
+  --brand-50:  hsl(var(--brand-h) 55% 14%);
+  --brand-soft: hsl(var(--brand-h) 60% 16%);
+  --brand-700: hsl(var(--brand-h) 70% 62%);
+  --brand-600: hsl(var(--brand-h) 78% 66%);
+  --brand-400: hsl(var(--brand-h) 85% 62%);
+
+  --ok-soft: #052e21; --ok-ink:#34d399;
+  --warn-soft:#3a2708; --warn-ink:#fbbf24;
+  --danger-soft:#3b0d0d; --danger-ink:#f87171;
+  --info-soft:#062c3d; --info-ink:#38bdf8;
+  --accent-soft: #3a2708;
+
+  --sh-md: 0 4px 14px rgba(0,0,0,.4);
+  --sh-lg: 0 12px 34px rgba(0,0,0,.45);
+  --sh-xl: 0 22px 60px rgba(0,0,0,.55);
+  --sh-brand: 0 8px 26px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / .30);
+}
