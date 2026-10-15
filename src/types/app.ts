@@ -1,0 +1,47 @@
+import type BetterSqlite3 from 'better-sqlite3';
+import type { Client } from 'discord.js';
+import type { Logger } from 'pino';
+import type { Environment } from '../config/env';
+import type { AdminLogRepository } from '../database/repositories/adminLogRepository';
+import type { ConfigRepository } from '../database/repositories/configRepository';
+import type { PanelRepository } from '../database/repositories/panelRepository';
+import type { PublicationRepository } from '../database/repositories/publicationRepository';
+import type { TicketRepository } from '../database/repositories/ticketRepository';
+import type { RecruitmentRepository } from '../database/repositories/recruitmentRepository';
+import type { GangRepository } from '../database/repositories/gangRepository';
+import type { ReactionRoleRepository } from '../database/repositories/reactionRoleRepository';
+import type { JournalService } from '../services/journal';
+import type { LeaderboardService } from '../services/leaderboard';
+import type { PanelService } from '../services/panels';
+import type { PermissionService } from '../services/permissions';
+import type { TicketService } from '../services/tickets';
+import type { TicketPanelService } from '../services/ticketPanel';
+import type { RecruitmentService } from '../services/recruitment';
+import type { GangService } from '../services/gangs';
+import type { ReactionRoleService } from '../services/reactionRoles';
+import type { StatisticsService } from '../services/statistics';
+
+export interface AppContext {
+  readonly environment: Environment;
+  readonly client: Client;
+  readonly database: BetterSqlite3.Database;
+  readonly logger: Logger;
+  readonly config: ConfigRepository;
+  readonly publications: PublicationRepository;
+  readonly tickets: TicketRepository;
+  readonly panels: PanelRepository;
+  readonly adminLogs: AdminLogRepository;
+  readonly permissions: PermissionService;
+  readonly journal: JournalService;
+  readonly leaderboard: LeaderboardService;
+  readonly ticketService: TicketService;
+  readonly ticketPanel: TicketPanelService;
+  readonly panelService: PanelService;
+  readonly recruitment: RecruitmentService;
+  readonly recruitmentApplications: RecruitmentRepository;
+  readonly gangs: GangRepository;
+  readonly reactionRoleRules: ReactionRoleRepository;
+  readonly gangService: GangService;
+  readonly reactionRoles: ReactionRoleService;
+  readonly statistics: StatisticsService;
+}
