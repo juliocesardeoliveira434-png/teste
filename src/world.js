@@ -485,14 +485,18 @@ export class World {
 
   /* ───────────────────────────── loop ───────────────────────────── */
 
-  update(dt) {
+  update(dt, ease = dt) {
     dt = Math.min(dt, 0.05);
+    ease = Math.min(ease, 0.5);
     this.time += dt;
     const t = this.time;
 
-    // aproxima do capítulo alvo
-    const k = 1 - Math.exp(-dt * 2.4);
+    // aproxima do capítulo alvo (por tempo real: não depende de fps)
+    const k = 1 - Math.exp(-ease * 2.4);
     this.ch += (this.targetCh - this.ch) * k;
+    // salto grande (índice, comando "ir", fim do curso) chega direto
+    if (Math.abs(this.targetCh - this.ch) > 1.2) this.ch = this.targetCh;
+    if (Math.abs(this.targetCh - this.ch) < 0.002) this.ch = this.targetCh;
     const chIndex = THREE.MathUtils.clamp(this.ch, 0, CHAPTERS.length - 1);
     const a = CHAPTERS[Math.floor(chIndex)];
     const b = CHAPTERS[Math.min(CHAPTERS.length - 1, Math.ceil(chIndex))];
@@ -508,22 +512,22 @@ export class World {
     this.currentSpread = spread;
 
     // glitch decai
-    this.glitch *= Math.exp(-dt * 3.4);
+    this.glitch *= Math.exp(-ease * 3.4);
     const glitchAmt = this.glitch + (this.chaos ? 0.55 : 0) + Math.abs(this.drag.x) * 0.35;
 
     this.U.uTime.value = t;
-    this.U.uAmp.value = THREE.MathUtils.lerp(this.U.uAmp.value, amp, 1 - Math.exp(-dt * 3));
-    this.U.uFreq.value = THREE.MathUtils.lerp(this.U.uFreq.value, lerp(a.freq, b.freq), 1 - Math.exp(-dt * 3));
-    this.U.uChaos.value = THREE.MathUtils.lerp(this.U.uChaos.value, glitchAmt * 0.6, 1 - Math.exp(-dt * 6));
+    this.U.uAmp.value = THREE.MathUtils.lerp(this.U.uAmp.value, amp, 1 - Math.exp(-ease * 3));
+    this.U.uFreq.value = THREE.MathUtils.lerp(this.U.uFreq.value, lerp(a.freq, b.freq), 1 - Math.exp(-ease * 3));
+    this.U.uChaos.value = THREE.MathUtils.lerp(this.U.uChaos.value, glitchAmt * 0.6, 1 - Math.exp(-ease * 6));
     this.U.uOpacity.value = gridOp;
     this.U.uWarp.value = THREE.MathUtils.lerp(
       this.U.uWarp.value,
       this.chaos ? 1.4 : 0.35 + glitchAmt * 0.4,
-      1 - Math.exp(-dt * 2)
+      1 - Math.exp(-ease * 2)
     );
 
     // paleta
-    const kp = 1 - Math.exp(-dt * 2.2);
+    const kp = 1 - Math.exp(-ease * 2.2);
     this.paletteA.lerp(this.paletteTarget.a, kp);
     this.paletteB.lerp(this.paletteTarget.b, kp);
     this.paletteC.lerp(this.paletteTarget.c, kp);
@@ -596,13 +600,13 @@ export class World {
 
     this.nebula.position.copy(this.camera.position);
 
-    this._updateCamera(dt, chIndex, t, glitchAmt);
+    this._updateCamera(dt, chIndex, t, glitchAmt, ease);
   }
 
-  _updateCamera(dt, chIndex, t, glitchAmt) {
-    const kp = 1 - Math.exp(-dt * 6);
+  _updateCamera(dt, chIndex, t, glitchAmt, ease = dt) {
+    const kp = 1 - Math.exp(-ease * 6);
     this.pointerSmooth.lerp(this.pointer, kp);
-    this.dragSmooth.lerp(this.drag, 1 - Math.exp(-dt * 7));
+    this.dragSmooth.lerp(this.drag, 1 - Math.exp(-ease * 7));
 
     const u = THREE.MathUtils.clamp(chIndex / (CHAPTERS.length - 1), 0, 1);
     this.camCurve.getPointAt(u, this.tmpOffset);
@@ -637,8 +641,13 @@ export class World {
     );
 
     const wanted = off.add(this.tmpTarget);
-    this.camPos.lerp(wanted, 1 - Math.exp(-dt * 4));
-    this.lookAt.lerp(this.tmpTarget, 1 - Math.exp(-dt * 5));
+    if (this.camPos.distanceTo(wanted) > 9) {
+      this.camPos.copy(wanted);
+      this.lookAt.copy(this.tmpTarget);
+    } else {
+      this.camPos.lerp(wanted, 1 - Math.exp(-ease * 4));
+      this.lookAt.lerp(this.tmpTarget, 1 - Math.exp(-ease * 5));
+    }
 
     // tremor de glitch
     if (glitchAmt > 0.05) {
@@ -654,7 +663,7 @@ export class World {
     // rolagem sutil da câmera
     this.camera.rotation.z += Math.sin(t * 0.25) * 0.006 + this.dragSmooth.x * 0.04;
 
-    const kf = 1 - Math.exp(-dt * 2.5);
+    const kf = 1 - Math.exp(-ease * 2.5);
     this.fov += (this.fovTarget - this.fov) * kf;
     if (Math.abs(this.camera.fov - this.fov) > 0.01) {
       this.camera.fov = this.fov;

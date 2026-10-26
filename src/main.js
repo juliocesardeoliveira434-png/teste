@@ -117,13 +117,28 @@ function buildIndex() {
 
 function goToChapter(i) {
   const max = document.documentElement.scrollHeight - window.innerHeight;
-  const t = clamp(i / (N - 1), 0, 1);
-  window.scrollTo({ top: t * max, behavior: reduceMotion ? 'auto' : 'smooth' });
+  const top = clamp(i / (N - 1), 0, 1) * max;
+  const start = window.scrollY;
+  // scroll suave só quando a máquina consegue animar; senão salta direto
+  const useSmooth = !reduceMotion && fps >= 24 && Math.abs(top - start) > 4;
+
+  window.scrollTo({ top, behavior: useSmooth ? 'smooth' : 'auto' });
+
+  if (useSmooth) {
+    // vigia: se o suave não engatar (compositor lento ou aba oculta), salta
+    setTimeout(() => {
+      if (Math.abs(window.scrollY - start) < 4) window.scrollTo({ top, behavior: 'auto' });
+    }, 320);
+  }
+
   drone?.blip(660 + i * 55, 0.14, 'triangle', 0.03);
 }
 
 function updateChapterDOM(dt) {
-  chapterFloat = lerp(chapterFloat, targetChapter, 1 - Math.exp(-dt * 9));
+  // tempo real (até 0,5 s): a transição leva o mesmo tempo em qualquer máquina
+  if (Math.abs(targetChapter - chapterFloat) > 1.2) chapterFloat = targetChapter;
+  chapterFloat = lerp(chapterFloat, targetChapter, 1 - Math.exp(-dt * 11));
+  if (Math.abs(targetChapter - chapterFloat) < 0.002) chapterFloat = targetChapter;
 
   $$('.chapter').forEach((el, i) => {
     const d = Math.abs(chapterFloat - i);
@@ -400,7 +415,7 @@ const COMMANDS = {
     }
   },
   reiniciar() {
-    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    goToChapter(0);
     world?.setPalette(...CHAPTERS[0].pal);
     world?.setNoiseLevel(1);
     world?.setSpread(1);
@@ -545,6 +560,8 @@ function initEvents() {
 function tick(now) {
   const rawDt = (now - lastFrame) / 1000;
   const dt = clamp(rawDt, 0, 0.05);
+  // easing usa tempo real (limitado a 0,5 s) — imune a quedas de fps
+  const ease = clamp(rawDt, 0, 0.5);
   lastFrame = now;
   if (!document.hidden) {
     elapsed += dt;
@@ -560,17 +577,17 @@ function tick(now) {
 
     // retorno elástico do arrasto
     if (!dragging && (Math.abs(drag.yaw) > 0.001 || Math.abs(drag.pitch) > 0.001)) {
-      const k = Math.exp(-dt * 2.2);
+      const k = Math.exp(-ease * 2.2);
       drag.yaw *= k;
       drag.pitch *= k;
       world?.setDrag(drag.yaw, drag.pitch);
     }
 
-    if (world) world.update(dt);
-    updateChapterDOM(dt);
+    if (world) world.update(dt, ease);
+    updateChapterDOM(ease);
 
     if (world && post) {
-      post.update(dt, elapsed, world.glitchAmount * 0.35 + (chaos ? 0.4 : 0) + Math.abs(drag.yaw) * 0.3);
+      post.update(ease, elapsed, world.glitchAmount * 0.35 + (chaos ? 0.4 : 0) + Math.abs(drag.yaw) * 0.3);
       post.render(dt);
     }
 
