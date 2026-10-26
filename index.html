@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ANTIPADRÃO — laboratório de não-lugares</title>
-<meta name="description" content="Um organismo 3D de teste. Sem grade, sem menu, sem herói, sem rodapé. Apenas matéria, ruído e você atravessando." />
-<meta name="theme-color" content="#05030b" />
-<meta property="og:title" content="ANTIPADRÃO — laboratório de não-lugares" />
-<meta property="og:description" content="Isto não é um site. É um organismo de teste." />
-<meta property="og:type" content="website" />
+<title>NÃO-LUGAR · Garrafa Nº 01 — tinto de altitude, 750 ml</title>
+<meta name="description" content="Tinto seco de altitude. Garrafa de 300 mm, corpo Ø 76 mm, 750 ml. Modelo 3D em tempo real: gire, aproxime, confira as medidas." />
+<meta name="theme-color" content="#050508" />
+<meta property="og:title" content="NÃO-LUGAR · Garrafa Nº 01" />
+<meta property="og:description" content="Tinto de altitude em garrafa soprada à boca. 750 ml · safra 2023 · lote 001/2400." />
+<meta property="og:type" content="product" />
 <link rel="preload" href="/fonts/Anton-Regular.ttf" as="font" type="font/ttf" crossorigin />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030b'/%3E%3Cpath d='M16 3 29 27H3Z' fill='none' stroke='%23ff2e88' stroke-width='2'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%23d6ff3f'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050508'/%3E%3Cpath d='M13 3h6v9c0 3 5 5 5 10v7H8v-7c0-5 5-7 5-10z' fill='none' stroke='%23c11248' stroke-width='2'/%3E%3C/svg%3E" />
 </head>
 <body>
 
@@ -20,25 +20,33 @@
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
 
 <!-- ─────────── HUD ─────────── -->
-<div class="hud hud-id">
+<header class="hud hud-id">
   <span class="dot"></span>
-  <b>ANTIPADRÃO</b>
-  <span class="muted">lab.∞</span>
-</div>
+  <b>NÃO-LUGAR</b>
+  <span class="muted">garrafa nº 01</span>
+</header>
 
-<div class="hud hud-coord" id="coords" aria-hidden="true">X +0.000 &nbsp; Y +0.000 &nbsp; Z +0.000</div>
+<div class="hud hud-coord" id="coords" aria-hidden="true">X +0.00 &nbsp; Y +0.00 &nbsp; Z +0.00</div>
 
 <div class="hud hud-side" aria-hidden="true">
-  <span>LABORATÓRIO DE NÃO-LUGARES</span>
-  <em>19°55′S</em>
-  <span>SEM PADRÃO / SEM ESCALA</span>
+  <span>VINHO TINTO · SAFRA 2023</span>
+  <em>750 ml</em>
+  <span>ALTO DA SERRA · 1.180 g</span>
 </div>
 
-<nav class="hud hud-index" id="index" aria-label="capítulos">
+<nav class="hud hud-index" id="index" aria-label="planos do produto">
   <ol></ol>
 </nav>
 
 <div class="hud hud-readout" id="readout" aria-hidden="true"></div>
+
+<div class="hud hud-cart">
+  <button id="cart-btn" class="cart-pill" type="button" aria-label="abrir a sacola">
+    <span class="cart-n" id="cart-count">0</span>
+    <span class="cart-l">sacola</span>
+    <span class="cart-v" id="cart-total">R$ 0</span>
+  </button>
+</div>
 
 <div class="hud hud-tools">
   <button id="btn-sound" class="tool" type="button" aria-pressed="false">SOM <span>OFF</span></button>
@@ -47,118 +55,127 @@
 
 <div class="hud hud-progress" aria-hidden="true"><i id="bar"></i></div>
 
-<!-- ─────────── PALCO DE TEXTO ─────────── -->
+<!-- ─────────── COTAS ─────────── -->
+<div class="medidas" id="medidas" aria-hidden="true">
+  <div class="m m-h" id="m-h">
+    <i class="m-line"></i>
+    <i class="m-tick a"></i>
+    <i class="m-tick b"></i>
+    <span class="m-lab">300 mm<em>altura total</em></span>
+  </div>
+  <div class="m m-w" id="m-w">
+    <i class="m-line"></i>
+    <i class="m-tick a"></i>
+    <i class="m-tick b"></i>
+    <span class="m-lab">Ø 76 mm<em>corpo</em></span>
+  </div>
+  <div class="m m-n" id="m-n">
+    <span class="m-lab">Ø 24 mm<em>gargalo</em></span>
+  </div>
+</div>
+
 <div class="scrim" aria-hidden="true"></div>
 
+<!-- ─────────── PALCO ─────────── -->
 <main id="stage">
 
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-in">
-      SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR ·
-    </div>
-  </div>
-
-  <section class="chapter" data-i="0" aria-label="Capítulo 1 — Gênese">
+  <section class="chapter" data-i="0" aria-label="Plano 1 — a garrafa">
     <span class="ch-num" aria-hidden="true">01</span>
     <h1 class="ch-title">
-      <span class="l1">NADA AQUI</span>
-      <span class="l2">SEGUE O</span>
-      <span class="l3 outline">PADRÃO</span>
+      <span class="l1">GARRAFA</span>
+      <span class="l2 outline">Nº 01</span>
     </h1>
     <p class="ch-body">
-      Isto não é um site. É um organismo de teste.
-      Um laboratório onde a interface foi dissolvida em matéria —
-      e a matéria não obedece a ninguém.
+      Tinto seco de altitude. Fermentado em concreto, sem filtragem e sem pressa.
+      Setecentos e cinquenta mililitros de teimosia.
     </p>
     <div class="ch-meta">
-      <span>ESPÉCIME 001</span>
-      <span>MATÉRIA: LUZ / RUÍDO</span>
-      <span class="pulse">ATIVO</span>
+      <span>SAFRA 2023</span>
+      <span>750 ML</span>
+      <span>LOTE 001 / 2400</span>
     </div>
-    <div class="ch-hint"><span>ROLE</span> para atravessar &nbsp;·&nbsp; <span>ARRASTE</span> para dobrar</div>
+    <div class="ch-hint"><span>ROLE</span> para atravessar &nbsp;·&nbsp; <span>ARRASTE</span> para girar</div>
   </section>
 
-  <section class="chapter" data-i="1" aria-label="Capítulo 2 — Ruído">
+  <section class="chapter" data-i="1" aria-label="Plano 2 — medidas">
     <span class="ch-num" aria-hidden="true">02</span>
-    <h2 class="ch-title ch-title--noise">
-      <span class="l1">PADRÃO É</span>
-      <span class="l2 outline">RUÍDO</span>
-      <span class="l3">DE FUNDO</span>
+    <h2 class="ch-title ch-title--dim">
+      <span class="l1">MEDIDAS</span>
+      <span class="l2 outline">EXATAS</span>
     </h2>
-    <p class="ch-body">
-      Toda convenção é um vírus replicado por repetição.
-      A mesma coreografia de sempre, executada até virar paisagem.
-      O único compromisso aqui é com o atrito.
-    </p>
-    <ul class="strike">
-      <li>grade de 12 colunas</li>
-      <li>navbar fixa</li>
-      <li>hero centralizado</li>
-      <li>cards de benefícios</li>
-      <li>call to action</li>
-      <li>rodapé com redes sociais</li>
-    </ul>
-    <p class="ch-note">tudo acima: <s>removido</s> / dissolvido no shader</p>
+    <dl class="spec">
+      <div><dt>altura total</dt><dd>300 mm</dd></div>
+      <div><dt>diâmetro do corpo</dt><dd>Ø 76 mm</dd></div>
+      <div><dt>diâmetro do gargalo</dt><dd>Ø 24 mm</dd></div>
+      <div><dt>capacidade</dt><dd>750 ml</dd></div>
+      <div><dt>peso bruto</dt><dd>1.180 g</dd></div>
+      <div><dt>peso do vidro</dt><dd>480 g</dd></div>
+      <div><dt>boca</dt><dd>Ø 18,5 mm</dd></div>
+    </dl>
+    <p class="ch-note">molde real · tolerância ±1,5 mm · cada unidade sai um pouco diferente</p>
   </section>
 
-  <section class="chapter" data-i="2" aria-label="Capítulo 3 — Fragmentos">
+  <section class="chapter" data-i="2" aria-label="Plano 3 — rótulo">
     <span class="ch-num" aria-hidden="true">03</span>
-    <h2 class="ch-title ch-title--frag">
-      <span class="l1">O OLHO</span>
-      <span class="l2">CONSTRÓI</span>
-      <span class="l3 outline">A FORMA</span>
+    <h2 class="ch-title ch-title--label">
+      <span class="l1">RÓTULO</span>
+      <span class="l2 outline">IMPRESSO</span>
     </h2>
     <p class="ch-body ch-body--right">
-      Você arrasta, a cena responde. Não existe botão de
-      “saiba mais”. Existe exploração — e a exploração
-      não vem com instruções.
+      Papel algodão de 320 g, tipografia gravada a quente, tinta mineral.
+      Nada de verniz: o papel envelhece junto com o vinho.
     </p>
     <div class="ch-meta ch-meta--right">
-      <span>FRAGMENTOS: 240</span>
-      <span>PARTÍCULAS: 9.000</span>
-      <span>RIGOR: NENHUM</span>
+      <span>PAPEL 320 G</span>
+      <span>HOT STAMP</span>
+      <span>TINTA MINERAL</span>
     </div>
-    <div class="ch-hint ch-hint--right"><span>CLIQUE E ARRASTE</span> em qualquer lugar</div>
+    <div class="ch-hint ch-hint--right"><span>GIRO LENTO</span> · arraste para ler</div>
   </section>
 
-  <section class="chapter" data-i="3" aria-label="Capítulo 4 — Laboratório">
-    <span class="ch-num" aria-hidden="true">04</span>
-    <h2 class="ch-title ch-title--lab">
-      <span class="l1">LABORA</span>
-      <span class="l2 outline">TÓRIO</span>
+  <section class="chapter" data-i="3" aria-label="Plano 4 — vidro">
+    <span class="ch-num" aria-hidden="true">03</span>
+    <h2 class="ch-title ch-title--glass">
+      <span class="l1">VIDRO</span>
+      <span class="l2 outline">ESCURO</span>
     </h2>
     <p class="ch-body">
-      O mundo escuta comandos. Abra o terminal e reescreva
-      a matéria: cor, ruído, gravidade, caos.
+      Âmbar-escuro para barrar luz. 480 gramas sopradas à boca, com espessura
+      desigual de propósito — a garrafa é o primeiro aviso de que nada aqui é exato.
     </p>
-    <button class="big-btn" id="open-console" type="button">
-      <span>ABRIR TERMINAL</span>
-      <i>⌘ / · tecla /</i>
-    </button>
-    <div class="cheat">
-      <code>cor #ff2e88</code><code>ruido 2.4</code><code>dispersao 1.8</code>
-      <code>caos</code><code>ir 5</code><code>ajuda</code>
+    <div class="ch-meta">
+      <span>SÍLICA RECICLADA 62%</span>
+      <span>SOPRADO À BOCA</span>
+      <span>RECICLÁVEL ∞</span>
     </div>
+    <div class="ch-hint"><span>LUZ</span> na borda · <span>VIDRO</span> no meio</div>
   </section>
 
-  <section class="chapter chapter--end" data-i="4" aria-label="Capítulo 5 — Transmissão">
+  <section class="chapter chapter--buy" data-i="4" aria-label="Plano 5 — comprar">
     <span class="ch-num" aria-hidden="true">05</span>
-    <h2 class="ch-title ch-title--end">
-      <span class="l1">FIM?</span>
-      <span class="l2 outline">NÃO.</span>
+    <h2 class="ch-title ch-title--buy">
+      <span class="l1">LEVAR</span>
+      <span class="l2 outline">UMA</span>
     </h2>
-    <p class="ch-body">
-      Um experimento nunca termina — ele só muda de estado.
-      Se quiser injetar algo neste organismo:
+    <p class="price">
+      <span class="price-v">R$ 289<span>,00</span></span>
+      <span class="price-note">à vista · ou 3× de R$ 96,33</span>
     </p>
-    <a class="signal" href="mailto:sinal@antipadrao.lab">sinal@antipadrao.lab</a>
-    <div class="ch-meta ch-meta--end">
-      <span>TRANSMISSÃO ABERTA</span>
-      <span>SEM NEWSLETTER · SEM COOKIES · SEM FUNIL</span>
+    <p class="ch-body ch-body--buy">
+      Lote 001 de 2.400 garrafas, numeradas à mão. Envio em 48 h,
+      frete calculado na sacola.
+    </p>
+    <div class="buy-actions">
+      <button class="buy" id="buy" type="button">
+        <span>ADICIONAR À SACOLA</span>
+        <i>R$ 289</i>
+      </button>
+      <button class="tool" id="go-measure" type="button">VER MEDIDAS <span>↗</span></button>
     </div>
-    <div class="end-actions">
-      <button class="tool" id="btn-restart" type="button">REINICIAR PERCURSO <span>↺</span></button>
-      <button class="tool" id="btn-chaos" type="button" aria-pressed="false">MODO CAOS <span>OFF</span></button>
+    <div class="ch-meta">
+      <span>ENVIO 48 H</span>
+      <span>GARANTIA 30 DIAS</span>
+      <span>LOTE 001 / 2400</span>
     </div>
   </section>
 
@@ -169,7 +186,7 @@
 <!-- ─────────── TERMINAL ─────────── -->
 <div class="terminal" id="terminal" hidden>
   <div class="term-head">
-    <span>ANTIPADRÃO // terminal de matéria</span>
+    <span>NÃO-LUGAR // console do produto</span>
     <button type="button" id="term-close" aria-label="fechar terminal">✕</button>
   </div>
   <div class="term-log" id="term-log" aria-live="polite"></div>
@@ -183,24 +200,26 @@
 <div class="gate" id="gate">
   <div class="gate-grid" aria-hidden="true"></div>
   <div class="gate-in">
-    <p class="gate-meta">EXPERIMENTO Nº 001 · 3D / ÁUDIO / WEBGL</p>
+    <p class="gate-meta">GARRAFA Nº 01 · TINTO · SAFRA 2023 · 750 ML</p>
     <h1 class="gate-title">
-      <span class="g1">ANTI</span><span class="g2">PADRÃO</span>
+      <span class="g1">NÃO</span><span class="g2">LUGAR</span>
     </h1>
-    <p class="gate-sub">um laboratório de não-lugares<br />onde nenhuma regra de layout sobrevive</p>
+    <p class="gate-sub">um tinto de altitude<br />engarrafado sem pressa, medido ao milímetro</p>
     <button class="gate-btn" id="enter" type="button">
       <span class="gb-l">ENTRAR</span>
       <span class="gb-r">⟩</span>
     </button>
-    <p class="gate-hint">use fones · arraste para olhar · role para atravessar</p>
+    <p class="gate-hint">arraste para girar · role para atravessar</p>
   </div>
   <div class="gate-foot">
-    <span>WEBGL 2</span><span>ÁUDIO PROCEDURAL</span><span>SEM IMAGENS · SEM ASSETS 3D</span>
+    <span>MODELO 3D EM TEMPO REAL</span><span>300 × Ø 76 MM</span><span>R$ 289</span>
   </div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <noscript>
-  <div class="fallback">Este organismo precisa de JavaScript e WebGL para existir.</div>
+  <div class="fallback">Esta garrafa existe em WebGL. Ligue o JavaScript para girá-la.</div>
 </noscript>
 
 <script type="module" src="/src/main.js"></script>

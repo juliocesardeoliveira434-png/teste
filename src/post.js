@@ -129,6 +129,10 @@ export class Post {
     this.bloomTarget = v;
   }
 
+  setAberration(v) {
+    this.aberrationTarget = v;
+  }
+
   resize(width, height) {
     this.composer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.pixelRatio));
     this.composer.setSize(width, height);
@@ -140,6 +144,11 @@ export class Post {
     const u = this.finalPass.uniforms;
     u.uTime.value = time;
     u.uAmount.value = THREE.MathUtils.lerp(u.uAmount.value, amount, 1 - Math.exp(-dt * 6));
+    u.uAberration.value = THREE.MathUtils.lerp(
+      u.uAberration.value,
+      this.aberrationTarget,
+      1 - Math.exp(-dt * 2.4)
+    );
     this.bloom.strength = THREE.MathUtils.lerp(
       this.bloom.strength,
       this.bloomTarget,

@@ -1,11 +1,12 @@
 import './style.css';
-import { World, CHAPTERS } from './world.js';
+import * as THREE from 'three';
+import { ProductScene, CHAPTERS } from './scene.js';
 import { Post } from './post.js';
 import { Drone } from './audio.js';
 
 /* ────────────────────────────────────────────────────────────
-   ANTIPADRÃO — orquestração
-   sem framework, sem grade, sem hero. só tempo, ruído e matéria.
+   NÃO-LUGAR · garrafa nº 01 — orquestração
+   scroll = plano de câmera · arrasto = giro · terminal = matéria
    ──────────────────────────────────────────────────────────── */
 
 const N = CHAPTERS.length;
@@ -21,16 +22,17 @@ const isSmall = window.innerWidth < 820;
 const lowPower = isTouch || isSmall || (navigator.hardwareConcurrency || 8) <= 4;
 
 const QUALITY = lowPower
-  ? { dust: 4200, shards: 150, coreDetail: 18, pixelRatio: 1.35 }
-  : { dust: 9000, shards: 240, coreDetail: 24, pixelRatio: 1.6 };
+  ? { dust: 1600, radialSegments: 96, pixelRatio: 1.35 }
+  : { dust: 3200, radialSegments: 128, pixelRatio: 1.6 };
+
+const PRICE = 289;
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-
 document.body.classList.add('gated');
 
 /* ───────────────────────────── estado ───────────────────────────── */
 
-let world = null;
+let scene = null;
 let post = null;
 let drone = null;
 let started = false;
@@ -38,18 +40,19 @@ let elapsed = 0;
 let progress = 0;
 let chapterFloat = 0;
 let targetChapter = 0;
-let chaos = false;
-let lastFrame = performance.now();
 let fps = 60;
 let fpsAcc = 0;
 let fpsCount = 0;
+let lastFrame = performance.now();
 let hudClock = 0;
 let pointer = { x: 0, y: 0 };
-let drag = { yaw: 0, pitch: 0 };
 let dragging = false;
 let dragPointerId = null;
-let dragStart = { x: 0, y: 0 };
-let dragBase = { yaw: 0, pitch: 0 };
+let dragLast = 0;
+let cart = { n: 0, total: 0 };
+let toastTimer = 0;
+
+const _proj = new THREE.Vector3();
 
 /* ───────────────────────────── construção ───────────────────────────── */
 
@@ -68,27 +71,27 @@ function build() {
     document.body.classList.add('no-webgl');
     $('#gate').insertAdjacentHTML(
       'beforeend',
-      '<div class="fallback">Seu dispositivo não expõe WebGL.<br><br>Ainda assim: nada aqui segue o padrão.</div>'
+      '<div class="fallback">Seu dispositivo não expõe WebGL.<br><br>A garrafa continua existindo — só não gira aqui.</div>'
     );
     return false;
   }
 
   try {
-    world = new World(canvas, QUALITY);
+    scene = new ProductScene(canvas, QUALITY);
     post = new Post(
-      world.renderer,
-      world.scene,
-      world.camera,
+      scene.renderer,
+      scene.scene,
+      scene.camera,
       window.innerWidth,
       window.innerHeight,
       QUALITY.pixelRatio
     );
   } catch (err) {
-    console.error('[ANTIPADRÃO] falha ao iniciar matéria', err);
+    console.error('[NÃO-LUGAR] falha ao montar a garrafa', err);
     document.body.classList.add('no-webgl');
     $('#gate').insertAdjacentHTML(
       'beforeend',
-      `<div class="fallback">A matéria não pôde ser compilada neste dispositivo.<br><br><small>${String(
+      `<div class="fallback">A garrafa não pôde ser montada neste dispositivo.<br><br><small>${String(
         err.message || err
       )}</small></div>`
     );
@@ -99,7 +102,7 @@ function build() {
   return true;
 }
 
-/* ───────────────────────────── HUD / índice ───────────────────────────── */
+/* ───────────────────────────── índice / navegação ───────────────────────────── */
 
 function buildIndex() {
   const ol = $('#index ol');
@@ -110,32 +113,28 @@ function buildIndex() {
 
   ol.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]');
-    if (!b) return;
-    goToChapter(Number(b.dataset.go));
+    if (b) goToChapter(Number(b.dataset.go));
   });
 }
 
 function goToChapter(i) {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const max = document.documentElement.scrollHeight - innerHeight;
   const top = clamp(i / (N - 1), 0, 1) * max;
   const start = window.scrollY;
-  // scroll suave só quando a máquina consegue animar; senão salta direto
   const useSmooth = !reduceMotion && fps >= 24 && Math.abs(top - start) > 4;
 
   window.scrollTo({ top, behavior: useSmooth ? 'smooth' : 'auto' });
 
   if (useSmooth) {
-    // vigia: se o suave não engatar (compositor lento ou aba oculta), salta
     setTimeout(() => {
       if (Math.abs(window.scrollY - start) < 4) window.scrollTo({ top, behavior: 'auto' });
     }, 320);
   }
 
-  drone?.blip(660 + i * 55, 0.14, 'triangle', 0.03);
+  drone?.blip(520 + i * 60, 0.16, 'sine', 0.03);
 }
 
-function updateChapterDOM(dt) {
-  // tempo real (até 0,5 s): a transição leva o mesmo tempo em qualquer máquina
+function updateChapters(dt) {
   if (Math.abs(targetChapter - chapterFloat) > 1.2) chapterFloat = targetChapter;
   chapterFloat = lerp(chapterFloat, targetChapter, 1 - Math.exp(-dt * 11));
   if (Math.abs(targetChapter - chapterFloat) < 0.002) chapterFloat = targetChapter;
@@ -145,15 +144,15 @@ function updateChapterDOM(dt) {
     const vis = smooth(clamp((0.72 - d) / 0.5, 0, 1));
 
     el.style.opacity = vis.toFixed(3);
-    const y = (chapterFloat - i) * -7;
-    const sc = 1 + (1 - vis) * 0.035;
-    el.style.transform = `translate3d(0, ${y}vh, 0) scale(${sc.toFixed(4)})`;
+    el.style.transform = `translate3d(0, ${((chapterFloat - i) * -7).toFixed(2)}vh, 0) scale(${(
+      1 +
+      (1 - vis) * 0.03
+    ).toFixed(4)})`;
     el.style.filter = vis < 0.98 && vis > 0.01 ? `blur(${((1 - vis) * 5).toFixed(2)}px)` : 'none';
     el.classList.toggle('live', vis > 0.02);
 
-    const spans = el.querySelectorAll('.ch-title > span');
-    spans.forEach((s, k) => {
-      s.style.transform = `translate3d(${(chapterFloat - i) * (12 + k * 8) * -1}px, 0, 0)`;
+    el.querySelectorAll('.ch-title > span').forEach((s, k) => {
+      s.style.transform = `translate3d(${((chapterFloat - i) * (10 + k * 7) * -1).toFixed(1)}px, 0, 0)`;
     });
   });
 
@@ -167,16 +166,10 @@ function updateChapterDOM(dt) {
 /* ───────────────────────────── scroll ───────────────────────────── */
 
 function onScroll() {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const max = document.documentElement.scrollHeight - innerHeight;
   progress = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
   targetChapter = progress * (N - 1);
-
-  const idx = Math.round(progress * (N - 1));
-  if (world) {
-    world.setChapter(progress * (N - 1));
-    post?.setBloom(CHAPTERS[idx].bloom);
-  }
-
+  scene?.setChapter(targetChapter);
   $('#bar').style.width = `${(progress * 100).toFixed(2)}%`;
 }
 
@@ -198,18 +191,14 @@ async function enter() {
   document.body.classList.add('entered');
   window.scrollTo(0, 0);
 
-  if (world) {
-    world.pulse(1.8);
-    post?.setBloom(1.6);
-    setTimeout(() => post?.setBloom(CHAPTERS[0].bloom), 1400);
-  }
+  scene?.pulse(1.6);
 
   try {
     await drone.enable();
     setSoundUI(true);
     drone.chord();
   } catch (err) {
-    console.warn('[ANTIPADRÃO] áudio bloqueado', err);
+    console.warn('[NÃO-LUGAR] áudio bloqueado', err);
     setSoundUI(false);
   }
 
@@ -222,7 +211,90 @@ function setSoundUI(on) {
   btn.querySelector('span').textContent = on ? 'ON' : 'OFF';
 }
 
-/* ───────────────────────────── ponteiro / cursor ───────────────────────────── */
+/* ───────────────────────────── sacola ───────────────────────────── */
+
+function updateCartUI() {
+  const count = $('#cart-count');
+  const total = $('#cart-total');
+  count.textContent = String(cart.n);
+  count.classList.toggle('empty', cart.n === 0);
+  total.textContent = `R$ ${cart.total.toLocaleString('pt-BR')}`;
+
+  const pill = $('#cart-btn');
+  pill.classList.remove('bump');
+  void pill.offsetWidth;
+  pill.classList.add('bump');
+}
+
+function addToCart() {
+  cart.n += 1;
+  cart.total += PRICE;
+  updateCartUI();
+  toast(`1 × garrafa nº 01 · R$ ${PRICE} — na sacola`);
+  scene?.pulse(0.7);
+  drone?.blip(880, 0.22, 'sine', 0.04);
+  setTimeout(() => drone?.blip(1320, 0.16, 'sine', 0.03), 90);
+}
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+}
+
+/* ───────────────────────────── cotas ───────────────────────────── */
+
+function projectPoint(p) {
+  _proj.copy(p).project(scene.camera);
+  return {
+    x: (_proj.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-_proj.y * 0.5 + 0.5) * window.innerHeight,
+  };
+}
+
+function updateMedidas() {
+  const wrap = $('#medidas');
+  if (!scene) return;
+
+  const vis = clamp((0.55 - Math.abs(chapterFloat - 1)) / 0.35, 0, 1);
+  wrap.classList.toggle('on', vis > 0.02);
+  wrap.style.opacity = vis.toFixed(3);
+  if (vis < 0.02 || window.innerWidth <= 820) return;
+
+  const m = scene.getMeasurePoints();
+  const base = projectPoint(m.base);
+  const top = projectPoint(m.top);
+  const left = projectPoint(m.left);
+  const right = projectPoint(m.right);
+  const neckL = projectPoint(m.neckLeft);
+  const neckR = projectPoint(m.neckRight);
+
+  // altura total: linha fora do corpo, à esquerda
+  const hx = Math.min(left.x, right.x) - 92;
+  const yTop = Math.min(top.y, base.y);
+  const h = Math.abs(base.y - top.y);
+  const elH = $('#m-h');
+  elH.style.transform = `translate3d(${hx.toFixed(1)}px, ${yTop.toFixed(1)}px, 0)`;
+  elH.style.height = `${h.toFixed(1)}px`;
+
+  // diâmetro do corpo
+  const yMid = (left.y + right.y) * 0.5;
+  const w = Math.abs(right.x - left.x);
+  const elW = $('#m-w');
+  elW.style.transform = `translate3d(${Math.min(left.x, right.x).toFixed(1)}px, ${yMid.toFixed(1)}px, 0)`;
+  elW.style.width = `${w.toFixed(1)}px`;
+
+  // gargalo
+  const elN = $('#m-n');
+  elN.style.transform = `translate3d(${Math.max(neckL.x, neckR.x).toFixed(1)}px, ${(
+    (neckL.y + neckR.y) *
+    0.5
+  ).toFixed(1)}px, 0)`;
+}
+
+/* ───────────────────────────── ponteiro / giro ───────────────────────────── */
 
 function initPointer() {
   const cursorEl = $('#cursor');
@@ -238,31 +310,27 @@ function initPointer() {
 
         pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -((e.clientY / window.innerHeight) * 2 - 1);
-
-        if (world) world.setPointer(pointer.x, pointer.y);
+        scene?.setPointer(pointer.x, pointer.y);
       },
       { passive: true }
     );
 
-    const hot = (e) => {
-      const t = e.target.closest('a, button, input, .strike li, code');
-      cursorEl.classList.toggle('hot', !!t);
-    };
-    window.addEventListener('pointerover', hot, { passive: true });
+    window.addEventListener(
+      'pointerover',
+      (e) => cursorEl.classList.toggle('hot', !!e.target.closest('a, button, input, .spec dd')),
+      { passive: true }
+    );
     window.addEventListener('pointerout', () => cursorEl.classList.remove('hot'), { passive: true });
   } else {
     cursorEl.remove();
   }
 
-  // arrasto para dobrar a cena
+  // arrasto gira a garrafa com inércia
   window.addEventListener('pointerdown', (e) => {
     if (e.target.closest('a, button, input, .terminal, .hud-index, .gate')) return;
     dragging = true;
     dragPointerId = e.pointerId;
-    dragStart.x = e.clientX;
-    dragStart.y = e.clientY;
-    dragBase.yaw = drag.yaw;
-    dragBase.pitch = drag.pitch;
+    dragLast = e.clientX;
     if (e.pointerType !== 'touch') document.body.style.userSelect = 'none';
   });
 
@@ -270,33 +338,26 @@ function initPointer() {
     'pointermove',
     (e) => {
       if (!dragging || e.pointerId !== dragPointerId) return;
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      drag.yaw = clamp(dragBase.yaw - dx * 0.0042, -1.1, 1.1);
-      drag.pitch = clamp(dragBase.pitch - dy * 0.0032, -0.75, 0.75);
-      if (world) world.setDrag(drag.yaw, drag.pitch);
+      const dx = e.clientX - dragLast;
+      dragLast = e.clientX;
+      scene?.dragSpin(dx);
     },
     { passive: true }
   );
 
-  const endDrag = (e) => {
+  const end = (e) => {
     if (e.pointerId !== dragPointerId) return;
     dragging = false;
     dragPointerId = null;
     document.body.style.userSelect = '';
   };
-  window.addEventListener('pointerup', endDrag);
-  window.addEventListener('pointercancel', endDrag);
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
 }
 
 /* ───────────────────────────── terminal ───────────────────────────── */
 
-const term = {
-  el: null,
-  log: null,
-  input: null,
-  open: false,
-};
+const term = { el: null, log: null, input: null, open: false };
 
 function termPrint(text, cls = '') {
   const line = document.createElement('div');
@@ -310,22 +371,20 @@ function initTerminal() {
   term.el = $('#terminal');
   term.log = $('#term-log');
   term.input = $('#term-input');
-  const form = $('#term-form');
 
   $('#btn-console').addEventListener('click', () => toggleTerminal());
-  $('#open-console').addEventListener('click', () => toggleTerminal(true));
   $('#term-close').addEventListener('click', () => toggleTerminal(false));
 
-  form.addEventListener('submit', (e) => {
+  $('#term-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const value = term.input.value.trim();
-    if (!value) return;
+    const v = term.input.value.trim();
+    if (!v) return;
     term.input.value = '';
-    runCommand(value);
+    runCommand(v);
   });
 
-  termPrint('terminal de matéria v0.1 — digite "ajuda"', 'sys');
-  termPrint('nada aqui obedece convenção. inclusive estes comandos.', 'sys');
+  termPrint('console do produto v1.0 — digite "ajuda"', 'sys');
+  termPrint('a garrafa responde a comandos. gire, pinte, compre.', 'sys');
 }
 
 function toggleTerminal(force) {
@@ -342,100 +401,98 @@ function toggleTerminal(force) {
 
 const COMMANDS = {
   ajuda() {
-    const lines = [
-      'cor <#hex> [secundária] [terciária]  · repinta a matéria',
-      'ruido <0–2.2>                         · amplitude da deformação',
-      'dispersao <0.2–3.4>                  · afasta os estilhaços',
-      'caos                                 · liga/desliga o modo caos',
-      'glitch                               · choque elétrico na cena',
-      'ir <1–5>                             · viaja para um capítulo',
-      'som                                  · liga/desliga o drone',
-      'reiniciar                            · volta ao início',
-      'limpar                               · limpa este log',
-      'info                                 · estado do organismo',
-    ];
-    lines.forEach((l) => termPrint(l, 'ok'));
+    [
+      'giro <0–3 | auto>        · velocidade do giro',
+      'luz <#hex> [#hex]        · cor da luz principal e do rim',
+      'cor <#hex>               · cor do vidro',
+      'vinho <#hex>             · cor do líquido',
+      'medidas                  · vai para o plano das medidas',
+      'comprar                  · põe uma garrafa na sacola',
+      'preco                    · preço e condições',
+      'ir <1–5>                 · salta para um plano',
+      'som                      · liga/desliga o ambiente sonoro',
+      'reiniciar                · volta a garrafa ao estado de fábrica',
+      'info                     · estado atual',
+      'limpar                   · limpa este log',
+    ].forEach((l) => termPrint(l, 'ok'));
   },
   help() {
     COMMANDS.ajuda();
   },
-  cor(args) {
+  giro(args) {
+    if (!args.length) return termPrint('uso: giro 0.6   ·   giro auto', 'err');
+    if (args[0] === 'auto') {
+      scene.spinOverride = undefined;
+      termPrint('giro automático restaurado', 'ok');
+      return;
+    }
+    const v = parseFloat(args[0]);
+    if (isNaN(v)) return termPrint('valor inválido', 'err');
+    scene?.setSpin(v);
+    termPrint(`giro = ${clamp(v, 0, 3).toFixed(2)} rad/s`, 'ok');
+  },
+  luz(args) {
     const valid = (s) => s && window.CSS && CSS.supports('color', s);
-    if (!args.length) return termPrint('uso: cor #ff2e88  (ou: cor sem cor)', 'err');
-    const c = args.filter((a) => valid(a));
-    if (!c.length) return termPrint('cor inválida — tente #ff2e88, #0ff, "tomato"', 'err');
-    world?.setPalette(c[0], c[1], c[2]);
-    world?.pulse(0.5);
-    termPrint(`matéria repintada: ${c.join(' / ')}`, 'ok');
-    drone?.blip(760, 0.2, 'sine', 0.04);
+    const c = args.filter(valid);
+    if (!c.length) return termPrint('uso: luz #fff1e2 #7fd8ff', 'err');
+    scene?.setLights(c[0], c[1] || null);
+    termPrint(`luz: ${c.join(' / ')}`, 'ok');
   },
-  ruido(args) {
-    const v = parseFloat(args[0]);
-    if (isNaN(v)) return termPrint('uso: ruido 1.4   (0 a 2.2)', 'err');
-    world?.setNoiseLevel(v);
-    world?.pulse(0.3);
-    termPrint(`deformação = ${clamp(v, 0, 2.2).toFixed(2)}`, 'ok');
+  cor(args) {
+    if (!args[0]) return termPrint('uso: cor #0d2a22', 'err');
+    scene?.setGlassTint(args[0]);
+    termPrint(`vidro: ${args[0]}`, 'ok');
   },
-  dispersao(args) {
-    const v = parseFloat(args[0]);
-    if (isNaN(v)) return termPrint('uso: dispersao 2.0   (0.2 a 3.4)', 'err');
-    world?.setSpread(v);
-    termPrint(`dispersão = ${clamp(v, 0.2, 3.4).toFixed(2)}`, 'ok');
+  vinho(args) {
+    if (!args[0]) return termPrint('uso: vinho #4e0b1c', 'err');
+    scene?.setLiquidTint(args[0]);
+    termPrint(`líquido: ${args[0]}`, 'ok');
   },
-  caos() {
-    chaos = !chaos;
-    world?.setChaos(chaos);
-    setChaosUI(chaos);
-    termPrint(`modo caos: ${chaos ? 'ATIVO' : 'desligado'}`, chaos ? 'ok' : 'sys');
-    drone?.sweep();
+  medidas() {
+    goToChapter(1);
+    termPrint('abrindo o plano das medidas', 'ok');
   },
-  glitch() {
-    world?.pulse(2);
-    termPrint('ruído injetado.', 'ok');
-    drone?.blip(140, 0.5, 'sawtooth', 0.05);
+  comprar() {
+    addToCart();
+    termPrint('garrafa adicionada à sacola', 'ok');
+  },
+  preco() {
+    termPrint('R$ 289,00 à vista · 3× de R$ 96,33 · frete na sacola', 'ok');
   },
   ir(args) {
     const i = parseInt(args[0], 10);
     if (isNaN(i) || i < 1 || i > N) return termPrint(`uso: ir 1..${N}`, 'err');
     goToChapter(i - 1);
-    termPrint(`viajando para o capítulo ${i}`, 'ok');
+    termPrint(`plano ${i}`, 'ok');
   },
   som() {
     if (!drone) return termPrint('áudio indisponível', 'err');
     if (drone.on) {
       drone.disable();
       setSoundUI(false);
-      termPrint('drone silenciado', 'sys');
+      termPrint('ambiente silenciado', 'sys');
     } else {
       drone.enable().then(() => {
         setSoundUI(true);
         drone.chord();
-        termPrint('drone ativo', 'ok');
+        termPrint('ambiente ativo', 'ok');
       });
     }
   },
   reiniciar() {
     goToChapter(0);
-    world?.setPalette(...CHAPTERS[0].pal);
-    world?.setNoiseLevel(1);
-    world?.setSpread(1);
-    world?.setChaos(false);
-    chaos = false;
-    setChaosUI(false);
-    termPrint('organismo reiniciado', 'ok');
+    scene?.setLights('#fff1e2', '#7fd8ff');
+    scene?.setGlassTint('#0d2a22');
+    scene?.setLiquidTint('#4e0b1c');
+    scene.spinOverride = undefined;
+    termPrint('garrafa de volta ao estado de fábrica', 'ok');
   },
   limpar() {
     term.log.innerHTML = '';
   },
   info() {
-    termPrint(
-      `capítulo ${(chapterFloat + 1).toFixed(2)}/${N} · progresso ${(progress * 100).toFixed(0)}% · fps ${fps.toFixed(0)}`,
-      'sys'
-    );
-    termPrint(`caos ${chaos ? 'on' : 'off'} · som ${drone?.on ? 'on' : 'off'} · glitch ${(world?.glitchAmount ?? 0).toFixed(2)}`, 'sys');
-  },
-  sobre() {
-    termPrint('ANTIPADRÃO — laboratório de não-lugares. three.js, shaders próprios, áudio procedural.', 'sys');
+    termPrint(`plano ${(chapterFloat + 1).toFixed(2)}/${N} · giro ${(scene?.spinSpeed ?? 0).toFixed(2)} rad/s`, 'sys');
+    termPrint(`sacola ${cart.n} · R$ ${cart.total} · fps ${fps.toFixed(0)}`, 'sys');
   },
 };
 
@@ -458,36 +515,39 @@ function runCommand(raw) {
 /* ───────────────────────────── HUD ───────────────────────────── */
 
 function updateHUD() {
-  if (world) {
-    const p = world.camPos;
-    const f = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3);
-    $('#coords').textContent = `X ${f(p.x)}   Y ${f(p.y)}   Z ${f(p.z)}`;
+  if (scene) {
+    const p = scene.camera.position;
+    const f = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
+    $('#coords').textContent = `X ${f(p.x)}  Y ${f(p.y)}  Z ${f(p.z)}`;
   }
 
   const idx = Math.round(chapterFloat);
-  const noise = (world?.U.uAmp.value ?? 0).toFixed(2);
-  const spread = (world?.currentSpread ?? 0).toFixed(2);
-  const gl = (world?.glitchAmount ?? 0).toFixed(2);
+  const ch = CHAPTERS[idx];
+  const spin = (scene?.spinSpeed ?? 0).toFixed(2);
   $('#readout').textContent =
-    `CAP ${String(idx + 1).padStart(2, '0')}/${String(N).padStart(2, '0')} · ${CHAPTERS[idx].label.toUpperCase()}\n` +
-    `RUÍDO ${noise} · DISPERSÃO ${spread} · CAOS ${gl}\n` +
+    `PLANO ${String(idx + 1).padStart(2, '0')}/${String(N).padStart(2, '0')} · ${ch.label.toUpperCase()}\n` +
+    `GIRO ${spin} RAD/S · SACOLA ${cart.n}\n` +
     `FPS ${fps.toFixed(0)} · ${(progress * 100).toFixed(0)}%`;
-}
-
-function setChaosUI(on) {
-  const btn = $('#btn-chaos');
-  btn.setAttribute('aria-pressed', String(on));
-  btn.querySelector('span').textContent = on ? 'ON' : 'OFF';
 }
 
 /* ───────────────────────────── eventos ───────────────────────────── */
 
 function initEvents() {
   $('#enter').addEventListener('click', enter);
+  $('#buy').addEventListener('click', addToCart);
+  $('#go-measure').addEventListener('click', () => goToChapter(1));
+  $('#cart-btn').addEventListener('click', () => {
+    if (cart.n === 0) {
+      goToChapter(N - 1);
+      toast('a sacola está vazia — escolha uma garrafa');
+    } else {
+      toast(`${cart.n} × garrafa nº 01 · R$ ${cart.total.toLocaleString('pt-BR')}`);
+    }
+  });
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', () => {
-    world?.resize(window.innerWidth, window.innerHeight);
+    scene?.resize(window.innerWidth, window.innerHeight);
     post?.resize(window.innerWidth, window.innerHeight);
     setSpacerHeight();
   });
@@ -504,22 +564,9 @@ function initEvents() {
     }
   });
 
-  $('#btn-chaos').addEventListener('click', () => {
-    chaos = !chaos;
-    world?.setChaos(chaos);
-    setChaosUI(chaos);
-    drone?.sweep();
-  });
-
-  $('#btn-restart').addEventListener('click', () => {
-    COMMANDS.reiniciar();
-    drone?.blip(520, 0.3, 'triangle', 0.04);
-  });
-
-  // teclado
   window.addEventListener('keydown', (e) => {
     const typing = e.target.matches('input, textarea');
-    if ((e.key === '/' || e.key === 'k') && (e.key === '/' ? !typing : e.metaKey || e.ctrlKey)) {
+    if (!typing && (e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key === 'k'))) {
       e.preventDefault();
       toggleTerminal(true);
       return;
@@ -528,31 +575,24 @@ function initEvents() {
       toggleTerminal(false);
       return;
     }
-    if (!typing && started) {
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-        // deixa o scroll nativo agir
-      }
-      if (e.key === 'c') {
-        chaos = !chaos;
-        world?.setChaos(chaos);
-        setChaosUI(chaos);
-      }
-    }
-    if (e.key === 'Enter' && !started && document.activeElement !== $('#enter')) {
-      enter();
-    }
+    if (!typing && e.key === 'Enter' && !started) enter();
+    if (!typing && (e.key === 'm' || e.key === 'M')) goToChapter(1);
   });
 
-  // troca de capítulo → som
+  // troca de plano → som
   let lastIdx = -1;
-  window.addEventListener('scroll', () => {
-    const idx = Math.round(progress * (N - 1));
-    if (idx !== lastIdx) {
-      lastIdx = idx;
-      drone?.setChapter(idx);
-      if (started && drone?.on) drone.blip(440 + idx * 70, 0.22, 'sine', 0.025);
-    }
-  }, { passive: true });
+  window.addEventListener(
+    'scroll',
+    () => {
+      const idx = Math.round(progress * (N - 1));
+      if (idx !== lastIdx) {
+        lastIdx = idx;
+        drone?.setChapter(idx);
+        if (started && drone?.on) drone.blip(360 + idx * 70, 0.24, 'sine', 0.022);
+      }
+    },
+    { passive: true }
+  );
 }
 
 /* ───────────────────────────── loop ───────────────────────────── */
@@ -560,13 +600,12 @@ function initEvents() {
 function tick(now) {
   const rawDt = (now - lastFrame) / 1000;
   const dt = clamp(rawDt, 0, 0.05);
-  // easing usa tempo real (limitado a 0,5 s) — imune a quedas de fps
   const ease = clamp(rawDt, 0, 0.5);
   lastFrame = now;
+
   if (!document.hidden) {
     elapsed += dt;
 
-    // fps
     fpsAcc += Math.max(rawDt, 0.0001);
     fpsCount++;
     if (fpsAcc > 0.5) {
@@ -575,20 +614,15 @@ function tick(now) {
       fpsCount = 0;
     }
 
-    // retorno elástico do arrasto
-    if (!dragging && (Math.abs(drag.yaw) > 0.001 || Math.abs(drag.pitch) > 0.001)) {
-      const k = Math.exp(-ease * 2.2);
-      drag.yaw *= k;
-      drag.pitch *= k;
-      world?.setDrag(drag.yaw, drag.pitch);
-    }
+    if (scene) scene.update(dt, ease);
+    updateChapters(ease);
+    updateMedidas();
 
-    if (world) world.update(dt, ease);
-    updateChapterDOM(ease);
-
-    if (world && post) {
-      post.update(ease, elapsed, world.glitchAmount * 0.35 + (chaos ? 0.4 : 0) + Math.abs(drag.yaw) * 0.3);
-      post.render(dt);
+    if (scene && post) {
+      post.setBloom(scene.bloomTarget);
+      post.setAberration(scene.postAberration);
+      post.update(ease, elapsed, scene.postAmount);
+      post.render(ease);
     }
 
     hudClock += dt;
@@ -597,6 +631,7 @@ function tick(now) {
       updateHUD();
     }
   }
+
   requestAnimationFrame(tick);
 }
 
@@ -608,9 +643,10 @@ function boot() {
   initPointer();
   initEvents();
   setSpacerHeight();
+  updateCartUI();
 
   if (build()) {
-    world.setChapter(0);
+    scene.setChapter(0);
     post.setBloom(CHAPTERS[0].bloom);
     drone.setChapter(0);
     onScroll();
@@ -620,12 +656,6 @@ function boot() {
     lastFrame = t;
     requestAnimationFrame(tick);
   });
-
-  // pista de que existe algo abaixo
-  setTimeout(() => {
-    const hint = $('.ch-hint');
-    if (hint) hint.style.opacity = '1';
-  }, 500);
 }
 
 if (document.readyState === 'loading') {

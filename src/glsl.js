@@ -1,4 +1,4 @@
-// ruído simplex 3D (Ashima Arts / Stefan Gustavson) + utilitários de shader
+// ruído simplex 3D (Ashima Arts / Stefan Gustavson) + utilitários compartilhados
 
 export const NOISE = /* glsl */ `
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -64,137 +64,36 @@ float snoise(vec3 v) {
 }
 `;
 
-export const CORE_VERT = /* glsl */ `
-uniform float uTime;
-uniform float uAmp;
-uniform float uFreq;
-uniform float uWarp;
+// estudo fotográfico analítico — usado pelo vidro, metal e rótulo.
+// duas softboxes + teto: é o que faz o vidro parecer vidro.
+export const STUDIO = /* glsl */ `
+uniform vec3 uKeyDir;
+uniform vec3 uRimDir;
+uniform vec3 uKeyCol;
+uniform vec3 uRimCol;
 
-varying vec3 vPosW;
-varying float vNoise;
+vec3 studioEnv(vec3 d) {
+  float up = smoothstep(-0.7, 0.95, d.y);
+  vec3 base = mix(vec3(0.018, 0.020, 0.028), vec3(0.085, 0.090, 0.115), up);
 
-${NOISE}
+  float box1 = smoothstep(0.70, 0.965, dot(d, normalize(vec3(-0.62, 0.34, 0.7))));
+  float box2 = smoothstep(0.88, 0.998, dot(d, normalize(vec3(0.88, 0.10, -0.44))));
+  float top  = smoothstep(0.88, 1.0, dot(d, normalize(vec3(0.05, 0.99, 0.10))));
 
-void main() {
-  vec3 dir = normalize(position);
-  float n1 = snoise(dir * uFreq + vec3(0.0, uTime * 0.13, uTime * 0.09));
-  float n2 = snoise(dir * (uFreq * 2.9) - vec3(uTime * 0.21, 0.0, uTime * 0.17));
-  float n3 = snoise(dir * (uFreq * 6.1) + vec3(uTime * 0.05, uTime * 0.31, 0.0));
+  vec3 c = base;
+  c += uKeyCol * box1 * mix(0.75, 1.55, smoothstep(0.0, 0.35, d.y));
+  c += uRimCol * box2 * 1.05;
+  c += vec3(0.85, 0.90, 1.0) * top * 0.42;
 
-  float d = n1 * 0.62 + n2 * 0.28 + n3 * 0.10;
-  vNoise = d;
-
-  vec3 p = position + dir * d * uAmp;
-  // dobra o espaço: deformação lateral que dá o aspecto de matéria viva
-  p.xz *= 1.0 + uWarp * 0.18 * sin(dir.y * 3.0 + uTime * 0.4);
-  p.y += uWarp * 0.22 * sin(dir.x * 4.0 + uTime * 0.25);
-
-  vec4 wp = modelMatrix * vec4(p, 1.0);
-  vPosW = wp.xyz;
-
-  gl_Position = projectionMatrix * viewMatrix * wp;
-}
-`;
-
-export const CORE_FRAG = /* glsl */ `
-uniform vec3 uA;
-uniform vec3 uB;
-uniform vec3 uC;
-uniform float uTime;
-uniform float uChaos;
-
-varying vec3 vPosW;
-varying float vNoise;
-
-void main() {
-  vec3 N = normalize(cross(dFdx(vPosW), dFdy(vPosW)));
-  vec3 V = normalize(cameraPosition - vPosW);
-  if (dot(N, V) < 0.0) N = -N;
-
-  float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 2.6);
-  float lambert = dot(N, normalize(vec3(0.5, 0.9, 0.35))) * 0.5 + 0.5;
-
-  vec3 col = mix(uA, uB, smoothstep(0.15, 0.95, lambert));
-  col = mix(col, uC, smoothstep(0.05, 0.95, vNoise) * 0.55);
-
-  // corpo escuro + bordas incandescentes
-  col *= 0.07 + fres * 1.25;
-  col += uB * pow(fres, 4.5) * 0.55;
-  col += uC * pow(max(vNoise, 0.0), 3.0) * (0.32 + uChaos * 0.8);
-  col += uA * 0.04 * smoothstep(0.2, 1.0, vNoise);
-
-  // varredura vertical sutil
-  col *= 0.94 + 0.06 * sin(vPosW.y * 24.0 - uTime * 1.4);
-
-  gl_FragColor = vec4(max(col, 0.0), 1.0);
-}
-`;
-
-export const SHARD_VERT = /* glsl */ `
-uniform float uTime;
-
-varying vec3 vN;
-varying vec3 vV;
-varying float vSeed;
-
-void main() {
-  float seed = fract(float(gl_InstanceID) * 0.6180339887);
-
-  #ifdef USE_INSTANCING
-    mat4 im = instanceMatrix;
-  #else
-    mat4 im = mat4(1.0);
-  #endif
-
-  vec3 p = position;
-  float ang = uTime * (0.25 + seed * 1.4) + seed * 6.2831;
-  // gira cada estilhaço em torno do próprio eixo
-  float c = cos(ang);
-  float s = sin(ang);
-  p = vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z);
-  p.z += sin(uTime * 0.7 + seed * 12.0) * 0.35;
-
-  vec4 wp = im * vec4(p, 1.0);
-  vec4 mv = modelViewMatrix * wp;
-
-  vN = normalize(mat3(modelViewMatrix) * mat3(im) * normal);
-  vV = normalize(-mv.xyz);
-  vSeed = seed;
-
-  gl_Position = projectionMatrix * mv;
-}
-`;
-
-export const SHARD_FRAG = /* glsl */ `
-uniform vec3 uA;
-uniform vec3 uB;
-uniform vec3 uC;
-uniform float uTime;
-
-varying vec3 vN;
-varying vec3 vV;
-varying float vSeed;
-
-void main() {
-  vec3 N = normalize(vN);
-  vec3 V = normalize(vV);
-  float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 1.6);
-
-  vec3 base = mix(uA, uC, step(0.55, vSeed));
-  base = mix(base, uB, 0.35);
-
-  vec3 col = base * (0.06 + fres * 0.95);
-  col += uB * pow(fres, 4.0) * 0.35;
-
-  gl_FragColor = vec4(col, 1.0);
+  // piso escuro: nenhuma reflexão forte vindo de baixo
+  c *= mix(0.28, 1.0, smoothstep(-1.0, -0.18, d.y));
+  return c;
 }
 `;
 
 export const DUST_VERT = /* glsl */ `
 uniform float uTime;
 uniform float uSize;
-uniform vec3 uA;
-uniform vec3 uB;
 
 attribute float aSeed;
 
@@ -205,21 +104,19 @@ void main() {
   vec3 p = position;
   float s = aSeed;
 
-  p.x += sin(uTime * 0.14 + s * 12.0) * 0.55;
-  p.y += cos(uTime * 0.11 + s * 9.0) * 0.55;
-  p.z += sin(uTime * 0.09 + s * 5.0) * 0.45;
+  p.x += sin(uTime * 0.14 + s * 12.0) * 2.4;
+  p.y += cos(uTime * 0.11 + s * 9.0) * 1.6;
+  p.z += sin(uTime * 0.09 + s * 5.0) * 2.0;
 
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   float dist = -mv.z;
 
   gl_Position = projectionMatrix * mv;
-  float px = uSize * (0.3 + s * 1.5) * (11.0 / max(dist, 0.6));
-  gl_PointSize = clamp(px, 0.6, 16.0);
+  gl_PointSize = clamp(uSize * (0.3 + s * 1.4) * (14.0 / max(dist, 1.0)), 0.6, 9.0);
 
-  float twinkle = 0.45 + 0.55 * sin(uTime * (0.6 + s * 2.2) + s * 40.0);
-  vColor = mix(uA, uB, step(0.5, s)) * (0.22 + twinkle * 0.5);
-  vAlpha = smoothstep(0.0, 2.5, dist) * (0.18 + 0.55 * twinkle) * smoothstep(36.0, 9.0, dist);
-  vAlpha *= 0.55;
+  float twinkle = 0.45 + 0.55 * sin(uTime * (0.5 + s * 1.8) + s * 40.0);
+  vColor = mix(vec3(0.95, 0.86, 0.78), vec3(0.55, 0.80, 1.0), step(0.55, s)) * (0.25 + twinkle * 0.45);
+  vAlpha = smoothstep(2.0, 8.0, dist) * (0.16 + 0.5 * twinkle) * smoothstep(150.0, 30.0, dist);
 }
 `;
 
@@ -229,114 +126,8 @@ varying float vAlpha;
 
 void main() {
   vec2 c = gl_PointCoord - 0.5;
-  float d = length(c);
-  float a = smoothstep(0.5, 0.02, d);
+  float a = smoothstep(0.5, 0.02, length(c));
   if (a < 0.01) discard;
   gl_FragColor = vec4(vColor, a * vAlpha);
-}
-`;
-
-export const GRID_VERT = /* glsl */ `
-varying vec3 vWorld;
-varying float vDist;
-
-void main() {
-  vec4 wp = modelMatrix * vec4(position, 1.0);
-  vWorld = wp.xyz;
-  vec4 mv = viewMatrix * wp;
-  vDist = -mv.z;
-  gl_Position = projectionMatrix * mv;
-}
-`;
-
-export const GRID_FRAG = /* glsl */ `
-uniform vec3 uA;
-uniform vec3 uB;
-uniform float uTime;
-uniform float uOpacity;
-
-varying vec3 vWorld;
-varying float vDist;
-
-float lines(float coord, float width) {
-  float g = abs(fract(coord - 0.5) - 0.5);
-  return smoothstep(width, 0.0, g);
-}
-
-void main() {
-  vec2 p = vWorld.xz;
-
-  float thin = max(lines(p.x * 0.5, 0.02), lines(p.y * 0.5, 0.02));
-  float bold = max(lines(p.x * 0.1, 0.006), lines(p.y * 0.1, 0.006));
-
-  // pulso que atravessa o plano
-  float pulse = smoothstep(0.5, 0.0, abs(length(p) - mod(uTime * 6.0, 44.0))) * 0.9;
-  float ring = smoothstep(0.25, 0.0, abs(length(p) - 14.0)) * 0.5;
-
-  vec3 col = mix(uA, uB, clamp(bold, 0.0, 1.0));
-  float a = (thin * 0.22 + bold * 0.55 + pulse + ring) * uOpacity;
-  a *= smoothstep(46.0, 6.0, vDist);
-  a *= smoothstep(0.0, 5.0, vDist);
-
-  if (a < 0.003) discard;
-  gl_FragColor = vec4(col, a);
-}
-`;
-
-export const GLOW_FRAG = /* glsl */ `
-uniform vec3 uColor;
-uniform float uTime;
-varying vec2 vUv;
-
-void main() {
-  float d = length(vUv - 0.5) * 2.0;
-  float a = pow(max(0.0, 1.0 - d), 5.0);
-  float wobble = 0.85 + 0.15 * sin(uTime * 0.8);
-  gl_FragColor = vec4(uColor * a * wobble * 0.5, a * 0.28);
-}
-`;
-
-export const GLOW_VERT = /* glsl */ `
-varying vec2 vUv;
-void main() {
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-export const NEBULA_VERT = /* glsl */ `
-varying vec3 vDir;
-void main() {
-  vDir = normalize(position);
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-export const NEBULA_FRAG = /* glsl */ `
-uniform float uTime;
-uniform vec3 uA;
-uniform vec3 uB;
-uniform vec3 uC;
-varying vec3 vDir;
-
-${NOISE}
-
-void main() {
-  vec3 d = normalize(vDir);
-
-  float n1 = snoise(d * 1.8 + vec3(uTime * 0.012, uTime * 0.008, 0.0)) * 0.5 + 0.5;
-  float n2 = snoise(d * 4.6 - vec3(0.0, uTime * 0.01, uTime * 0.006)) * 0.5 + 0.5;
-  float cloud = pow(n1 * 0.65 + n2 * 0.35, 2.1);
-
-  float horizon = pow(1.0 - abs(d.y), 3.4);
-
-  vec3 base = vec3(0.012, 0.008, 0.032);
-  vec3 col = base;
-  col += uB * cloud * 0.085 * (0.35 + horizon);
-  col += uA * pow(n2, 3.0) * 0.06;
-  col += uC * cloud * horizon * 0.035;
-  col += vec3(0.02, 0.015, 0.05) * horizon * 0.5;
-
-  gl_FragColor = vec4(col, 1.0);
 }
 `;
