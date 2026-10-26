@@ -1,81 +1,86 @@
-# 🎹 Teclaton
+# ANTIPADRÃO
 
-**Seu teclado é um instrumento.** Cada tecla toca um som e dispara uma animação — inspirado no clássico [Patatap](https://patatap.com) (Jono Brandel & Lullatone), mas com **muito mais variedade sonora**.
+> Um laboratório de não-lugares. Nenhum padrão de layout sobrevive aqui.
 
-> **288 sons** · **8 universos sonoros** · **20 animações** · 100% offline, sem arquivos de áudio, sem APIs, sem chave nenhuma.
+Não é uma landing page. É um organismo 3D que responde a scroll, arrasto, som e
+comandos de terminal. Tudo o que você vê é geometria gerada em tempo real — não
+existe uma única imagem, ícone ou modelo 3D no projeto.
 
-## ▶ Como usar (rodar agora)
+## O que tem dentro
 
-**Jeito 1 — abrir direto:** dê dois cliques no `index.html`. Pronto.
+- **Matéria viva** — esfera deformada por ruído simplex 3D no vertex shader, com
+  corpo escuro e bordas incandescentes (fresnel + derivadas em tela cheia).
+- **Casca de arame** — estrutura exposta que gira em contra-fase ao núcleo.
+- **240 estilhaços instanciados** orbitando com rotação própria (InstancedMesh).
+- **9.000 partículas** de poeira em shader próprio, com cintilação e atenuação.
+- **Grade infinita** abaixo do organismo, com pulso que atravessa o plano.
+- **Pós-processamento** — bloom, aberração cromática radial, fatias de glitch,
+  distorção de lente, grão analógico e vinheta.
+- **Trilha procedural** — drone de 4 osciladores + delay em rede + textura de
+  ruído. Nenhum arquivo de áudio; tudo sintetizado pelo WebAudio.
+- **Terminal de matéria** — o mundo escuta comandos.
+- **Cinco capítulos** costurados numa curva Catmull-Rom de câmera: a cena não
+  troca de página, ela é atravessada.
 
-**Jeito 2 — localhost (recomendado):**
+## Rodar
 
 ```bash
-cd teclaton   # pasta do projeto
-python3 -m http.server 8080
-# abra http://localhost:8080
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # gera dist/
+npm run preview    # serve o build
 ```
 
-**Jeito 3 — GitHub Pages (hospedagem de graça, pra sempre):**
+Precisa de WebGL. Em aparelhos sem GPU decente, o projeto cai automaticamente
+para um modo leve (menos partículas, menos pixel ratio).
 
-1. Se o repositório for **privado**, deixe-o público: **Settings → General → Danger Zone → Change visibility** (no plano gratuito o Pages só publica repositórios públicos);
-2. Faça merge do PR e/ou garanta o push deste branch no GitHub;
-3. No repositório: **Settings → Pages → Build and deployment**;
-4. Em *Source*, escolha o branch (ex.: `main` após o merge) e a pasta `/ (root)`;
-5. Em ~1 minuto o site fica no ar em `https://SEUUSUARIO.github.io/NOME-DO-REPO/`.
+## Como atravessar
 
-> Não é possível publicar do privado com conta gratuita: o próprio GitHub bloqueia. Nenhuma etapa precisa de chave de API ou serviço externo — o GitHub Pages é gratuito para repositórios públicos.
+| ação | efeito |
+| --- | --- |
+| rolar | viaja entre os capítulos, a câmera percorre a curva |
+| arrastar em qualquer lugar | dobra a órbita; solta e volta com elástico |
+| mover o mouse | paralaxe e inclinação da câmera |
+| `SOM` (canto inferior) | liga o drone procedural |
+| `TERMINAL` ou `/` | abre o terminal de comandos |
+| `c` | alterna o modo caos |
+| `Esc` | fecha o terminal |
 
-## 🎮 Controles
-
-| Tecla / gesto                     | Ação                                          |
-|---------------------------------|-----------------------------------------------|
-| `A`–`Z`                           | cada letra = 1 som + 1 animação               |
-| `1`–`0`                           | golpes especiais (acordes, glissandos, trovões, gongos…) |
-| `Espaço`                          | troca o universo sonoro                       |
-| clicar / tocar na tela            | toca a nota daquela posição (esquerda = grave) |
-| 2 dedos (celular)                 | dispara um golpe especial                     |
-| `Esc`                             | fecha a ajuda / para a demo                   |
-
-## 🎛 Recursos
-
-- **▶ Demo** — toca uma sequência de demonstração do universo atual;
-- **⏺ Gravar** — grava **vídeo + áudio** da sua sessão em `.webm` e baixa na hora (tudo local, via `MediaRecorder`, nada sobe pra internet);
-- **🔊** — volume com memória (fica salvo junto com o último universo);
-- **⛶** — tela cheia.
-
-## 🌌 Os 8 universos
-
-| Universo | Emoji | Clima |
-|---|---|---|
-| Clássico | 🎹 | marimbas, sinos e bateria limpa (homenagem ao Patatap original) |
-| Lo-Fi Chill | 🌙 | kalimba com poeira de vinil, 808 e chuva |
-| Synthwave | 🌆 | leads saw, bass pulsante e lasers noturnos |
-| 8-Bit | 🕹️ | blips de Game Boy, moedas e power-ups |
-| Natureza | 🌿 | gotas, pássaros, grilos, vento e trovão |
-| Mundo | 🥁 | congas, djembe, tabla, berimbau e apito |
-| Cinema | 🎬 | tímpanos, gongos, harpa, cordas e coro |
-| Sci-Fi | 🛸 | lasers, radar, OVNIs, warp e robôs |
-
-## 🧠 Como funciona
-
-- **Som:** [Web Audio API](https://developer.mozilla.org/pt-BR/docs/Web/API/Web_Audio_API). Todos os 71 timbres são **sintetizados em tempo real** (osciladores, ruído, FM, síntese subtrativa, reverb por convolução com impulso gerado em código, delay com feedback). Não existe **nenhum** arquivo `.mp3`/`.wav` no projeto.
-- **Visual:** Canvas 2D com 20 formas animadas, composição aditiva (glow) e transição suave de paleta entre universos.
-- **Sem dependências:** zero frameworks, zero CDNs, zero build. 4 arquivos JS puros.
+### Comandos do terminal
 
 ```
-index.html      ← página única
-css/style.css   ← estilos
-js/audio.js     ← motor de som (71 timbres sintetizados)
-js/packs.js     ← os 8 universos × 36 teclas
-js/visuals.js   ← motor visual (20 formas)
-js/app.js       ← teclado, demo, gravação, UI
+cor <#hex> [sec] [terc]   repinta toda a matéria
+ruido <0–2.2>             amplitude da deformação
+dispersao <0.2–3.4>       afasta os estilhaços
+caos                      liga/desliga o modo caos
+glitch                    injeta um choque na cena
+ir <1–5>                  viaja para um capítulo
+som                       liga/desliga o drone
+reiniciar                 volta o organismo ao estado inicial
+info                      estado atual (capítulo, fps, ruído)
+limpar / ajuda
 ```
 
-## 📱 Compatibilidade
+## Estrutura
 
-Funciona em qualquer navegador moderno (Chrome, Edge, Firefox, Safari), desktop e celular. A gravação de vídeo usa `MediaRecorder` — disponível em todos menos alguns navegadores antigos; nesse caso o botão fica desabilitado e o resto funciona normalmente.
+```
+index.html          marcação + portão de entrada
+src/style.css       folha de matéria (tipografia, HUD, terminal)
+src/main.js         orquestração: scroll, ponteiro, HUD, terminal
+src/world.js        cena three.js, matéria, câmera, capítulos
+src/glsl.js         shaders (ruído, núcleo, estilhaços, poeira, grade, nebulosa)
+src/post.js         composer: bloom + pass final de lente/glitch/grão
+src/audio.js        drone e efeitos procedurais (WebAudio)
+public/fonts/       Anton, JetBrains Mono, Instrument Serif (self-hosted)
+```
 
----
+## Notas de projeto
 
-*Projeto de estudo/homenagem ao Patatap. Feito com ❤️ e Web Audio.*
+- Fontes hospedadas localmente: nenhum CDN, nenhum pedido a terceiros.
+- Sem cookies, sem analytics, sem newsletter, sem funil.
+- `prefers-reduced-motion` desliga grão animado, marquee e pulso do portão.
+- Acessibilidade: capítulos são landmarks com `aria-label`, o índice é navegável
+  por teclado, o terminal usa `aria-live`.
+
+Licença MIT. Faça o que quiser — só não transforme isto num template de agência
+com cards e depoimentos.

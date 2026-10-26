@@ -1,78 +1,208 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Teclaton — seu teclado é um instrumento</title>
-<meta name="description" content="288 sons, 8 universos sonoros, 1 teclado. Aperte teclas e faça música com animações — inspirado no Patatap.">
-<link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ANTIPADRÃO — laboratório de não-lugares</title>
+<meta name="description" content="Um organismo 3D de teste. Sem grade, sem menu, sem herói, sem rodapé. Apenas matéria, ruído e você atravessando." />
+<meta name="theme-color" content="#05030b" />
+<meta property="og:title" content="ANTIPADRÃO — laboratório de não-lugares" />
+<meta property="og:description" content="Isto não é um site. É um organismo de teste." />
+<meta property="og:type" content="website" />
+<link rel="preload" href="/fonts/Anton-Regular.ttf" as="font" type="font/ttf" crossorigin />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030b'/%3E%3Cpath d='M16 3 29 27H3Z' fill='none' stroke='%23ff2e88' stroke-width='2'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%23d6ff3f'/%3E%3C/svg%3E" />
 </head>
 <body>
-<canvas id="stage"></canvas>
 
-<header id="top">
-  <div id="brand">
-    <div id="logo">TECLA<span>TON</span></div>
-    <div id="packname">🎹 Clássico</div>
-  </div>
-  <div id="controls">
-    <button id="btnDemo" class="ctl" title="Tocar demonstração">▶ Demo</button>
-    <button id="btnRec" class="ctl" title="Gravar vídeo da sessão (com som)">⏺ Gravar</button>
-    <div id="volwrap" title="Volume">
-      <span>🔊</span>
-      <input type="range" id="vol" min="0" max="100" value="80">
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="film" aria-hidden="true"></div>
+<div class="scan" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+
+<!-- ─────────── HUD ─────────── -->
+<div class="hud hud-id">
+  <span class="dot"></span>
+  <b>ANTIPADRÃO</b>
+  <span class="muted">lab.∞</span>
+</div>
+
+<div class="hud hud-coord" id="coords" aria-hidden="true">X +0.000 &nbsp; Y +0.000 &nbsp; Z +0.000</div>
+
+<div class="hud hud-side" aria-hidden="true">
+  <span>LABORATÓRIO DE NÃO-LUGARES</span>
+  <em>19°55′S</em>
+  <span>SEM PADRÃO / SEM ESCALA</span>
+</div>
+
+<nav class="hud hud-index" id="index" aria-label="capítulos">
+  <ol></ol>
+</nav>
+
+<div class="hud hud-readout" id="readout" aria-hidden="true"></div>
+
+<div class="hud hud-tools">
+  <button id="btn-sound" class="tool" type="button" aria-pressed="false">SOM <span>OFF</span></button>
+  <button id="btn-console" class="tool" type="button">TERMINAL <span>⌘/</span></button>
+</div>
+
+<div class="hud hud-progress" aria-hidden="true"><i id="bar"></i></div>
+
+<!-- ─────────── PALCO DE TEXTO ─────────── -->
+<div class="scrim" aria-hidden="true"></div>
+
+<main id="stage">
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-in">
+      SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR · SEM PADRÃO · NÃO-LUGAR ·
     </div>
-    <button id="btnFull" class="ctl" title="Tela cheia">⛶</button>
-    <button id="btnHelp" class="ctl" title="Ajuda">?</button>
   </div>
-</header>
 
-<div id="hint">aperte <b>qualquer tecla</b><span class="dim"> · espaço troca o universo sonoro</span></div>
+  <section class="chapter" data-i="0" aria-label="Capítulo 1 — Gênese">
+    <span class="ch-num" aria-hidden="true">01</span>
+    <h1 class="ch-title">
+      <span class="l1">NADA AQUI</span>
+      <span class="l2">SEGUE O</span>
+      <span class="l3 outline">PADRÃO</span>
+    </h1>
+    <p class="ch-body">
+      Isto não é um site. É um organismo de teste.
+      Um laboratório onde a interface foi dissolvida em matéria —
+      e a matéria não obedece a ninguém.
+    </p>
+    <div class="ch-meta">
+      <span>ESPÉCIME 001</span>
+      <span>MATÉRIA: LUZ / RUÍDO</span>
+      <span class="pulse">ATIVO</span>
+    </div>
+    <div class="ch-hint"><span>ROLE</span> para atravessar &nbsp;·&nbsp; <span>ARRASTE</span> para dobrar</div>
+  </section>
 
-<footer id="kb" aria-hidden="true">
-  <div class="kbrow" id="kbDigits"></div>
-  <div class="kbrow" id="kb1"></div>
-  <div class="kbrow" id="kb2"></div>
-  <div class="kbrow" id="kb3"></div>
-</footer>
+  <section class="chapter" data-i="1" aria-label="Capítulo 2 — Ruído">
+    <span class="ch-num" aria-hidden="true">02</span>
+    <h2 class="ch-title ch-title--noise">
+      <span class="l1">PADRÃO É</span>
+      <span class="l2 outline">RUÍDO</span>
+      <span class="l3">DE FUNDO</span>
+    </h2>
+    <p class="ch-body">
+      Toda convenção é um vírus replicado por repetição.
+      A mesma coreografia de sempre, executada até virar paisagem.
+      O único compromisso aqui é com o atrito.
+    </p>
+    <ul class="strike">
+      <li>grade de 12 colunas</li>
+      <li>navbar fixa</li>
+      <li>hero centralizado</li>
+      <li>cards de benefícios</li>
+      <li>call to action</li>
+      <li>rodapé com redes sociais</li>
+    </ul>
+    <p class="ch-note">tudo acima: <s>removido</s> / dissolvido no shader</p>
+  </section>
 
-<div id="toast"></div>
+  <section class="chapter" data-i="2" aria-label="Capítulo 3 — Fragmentos">
+    <span class="ch-num" aria-hidden="true">03</span>
+    <h2 class="ch-title ch-title--frag">
+      <span class="l1">O OLHO</span>
+      <span class="l2">CONSTRÓI</span>
+      <span class="l3 outline">A FORMA</span>
+    </h2>
+    <p class="ch-body ch-body--right">
+      Você arrasta, a cena responde. Não existe botão de
+      “saiba mais”. Existe exploração — e a exploração
+      não vem com instruções.
+    </p>
+    <div class="ch-meta ch-meta--right">
+      <span>FRAGMENTOS: 240</span>
+      <span>PARTÍCULAS: 9.000</span>
+      <span>RIGOR: NENHUM</span>
+    </div>
+    <div class="ch-hint ch-hint--right"><span>CLIQUE E ARRASTE</span> em qualquer lugar</div>
+  </section>
 
-<div id="start">
-  <div class="startBox">
-    <div class="startLogo">TECLA<b>TON</b></div>
-    <p class="startTag">288 sons · 8 universos · 1 teclado</p>
-    <button id="btnStart">▶&nbsp; começar</button>
-    <p class="startSmall">ou simplesmente aperte uma tecla</p>
-    <p class="startTiny">inspirado no clássico <i>Patatap</i> — 100% offline, sem APIs</p>
+  <section class="chapter" data-i="3" aria-label="Capítulo 4 — Laboratório">
+    <span class="ch-num" aria-hidden="true">04</span>
+    <h2 class="ch-title ch-title--lab">
+      <span class="l1">LABORA</span>
+      <span class="l2 outline">TÓRIO</span>
+    </h2>
+    <p class="ch-body">
+      O mundo escuta comandos. Abra o terminal e reescreva
+      a matéria: cor, ruído, gravidade, caos.
+    </p>
+    <button class="big-btn" id="open-console" type="button">
+      <span>ABRIR TERMINAL</span>
+      <i>⌘ / · tecla /</i>
+    </button>
+    <div class="cheat">
+      <code>cor #ff2e88</code><code>ruido 2.4</code><code>dispersao 1.8</code>
+      <code>caos</code><code>ir 5</code><code>ajuda</code>
+    </div>
+  </section>
+
+  <section class="chapter chapter--end" data-i="4" aria-label="Capítulo 5 — Transmissão">
+    <span class="ch-num" aria-hidden="true">05</span>
+    <h2 class="ch-title ch-title--end">
+      <span class="l1">FIM?</span>
+      <span class="l2 outline">NÃO.</span>
+    </h2>
+    <p class="ch-body">
+      Um experimento nunca termina — ele só muda de estado.
+      Se quiser injetar algo neste organismo:
+    </p>
+    <a class="signal" href="mailto:sinal@antipadrao.lab">sinal@antipadrao.lab</a>
+    <div class="ch-meta ch-meta--end">
+      <span>TRANSMISSÃO ABERTA</span>
+      <span>SEM NEWSLETTER · SEM COOKIES · SEM FUNIL</span>
+    </div>
+    <div class="end-actions">
+      <button class="tool" id="btn-restart" type="button">REINICIAR PERCURSO <span>↺</span></button>
+      <button class="tool" id="btn-chaos" type="button" aria-pressed="false">MODO CAOS <span>OFF</span></button>
+    </div>
+  </section>
+
+</main>
+
+<div class="spacer" id="spacer" aria-hidden="true"></div>
+
+<!-- ─────────── TERMINAL ─────────── -->
+<div class="terminal" id="terminal" hidden>
+  <div class="term-head">
+    <span>ANTIPADRÃO // terminal de matéria</span>
+    <button type="button" id="term-close" aria-label="fechar terminal">✕</button>
+  </div>
+  <div class="term-log" id="term-log" aria-live="polite"></div>
+  <form class="term-form" id="term-form" autocomplete="off">
+    <span class="prompt">&gt;</span>
+    <input id="term-input" name="cmd" type="text" spellcheck="false" placeholder="digite um comando… (ajuda)" aria-label="comando" />
+  </form>
+</div>
+
+<!-- ─────────── PORTÃO ─────────── -->
+<div class="gate" id="gate">
+  <div class="gate-grid" aria-hidden="true"></div>
+  <div class="gate-in">
+    <p class="gate-meta">EXPERIMENTO Nº 001 · 3D / ÁUDIO / WEBGL</p>
+    <h1 class="gate-title">
+      <span class="g1">ANTI</span><span class="g2">PADRÃO</span>
+    </h1>
+    <p class="gate-sub">um laboratório de não-lugares<br />onde nenhuma regra de layout sobrevive</p>
+    <button class="gate-btn" id="enter" type="button">
+      <span class="gb-l">ENTRAR</span>
+      <span class="gb-r">⟩</span>
+    </button>
+    <p class="gate-hint">use fones · arraste para olhar · role para atravessar</p>
+  </div>
+  <div class="gate-foot">
+    <span>WEBGL 2</span><span>ÁUDIO PROCEDURAL</span><span>SEM IMAGENS · SEM ASSETS 3D</span>
   </div>
 </div>
 
-<div id="help" class="hidden">
-  <div id="helpCard">
-    <button id="btnHelpClose" title="Fechar">✕</button>
-    <h2>Como tocar</h2>
-    <table>
-      <tr><td><kbd>A</kbd>–<kbd>Z</kbd></td><td>cada letra é um som + animação</td></tr>
-      <tr><td><kbd>1</kbd>–<kbd>0</kbd></td><td>golpes especiais (acordes, glissandos, trovões…)</td></tr>
-      <tr><td><kbd>Espaço</kbd></td><td>troca o universo sonoro</td></tr>
-      <tr><td>toque na tela</td><td>(celular) toca as notas da esquerda pra direita</td></tr>
-      <tr><td>2 dedos</td><td>(celular) dispara um golpe especial</td></tr>
-    </table>
-    <h2>Recursos</h2>
-    <table>
-      <tr><td>⏺ Gravar</td><td>grava vídeo + áudio da sessão (.webm), direto no navegador</td></tr>
-      <tr><td>▶ Demo</td><td>toque uma sequência de demonstração do universo atual</td></tr>
-      <tr><td>⛶</td><td>tela cheia — perfeito para apresentar</td></tr>
-    </table>
-    <p class="helpFoot">Feito com Web Audio API — todos os sons são sintetizados em tempo real.<br>
-    Nenhum arquivo de áudio, nenhuma API externa, nenhuma chave. Homenagem a <i>Patatap</i> (Jono Brandel &amp; Lullatone).</p>
-  </div>
-</div>
+<noscript>
+  <div class="fallback">Este organismo precisa de JavaScript e WebGL para existir.</div>
+</noscript>
 
-<script src="js/audio.js"></script>
-<script src="js/packs.js"></script>
-<script src="js/visuals.js"></script>
-<script src="js/app.js"></script>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>
